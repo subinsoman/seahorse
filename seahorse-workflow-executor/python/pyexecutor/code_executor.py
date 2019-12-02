@@ -18,6 +18,7 @@ import traceback
 from pyspark import SQLContext
 from pyspark.sql.dataframe import DataFrame
 from threading import Thread
+from simple_logging import log_debug, log_error
 
 class CodeExecutor(object):
     """
@@ -53,8 +54,11 @@ class CodeExecutor(object):
             self._run_custom_code(workflow_id, node_id, custom_operation_code)
             self.entry_point.executionCompleted(workflow_id, node_id)
         except Exception as e:
-            stacktrace = traceback.format_exc(e)
+            log_error('AN ERROR OCCURED ==>')
+            stacktrace = traceback.format_exc()
+            log_error(stacktrace)
             self.entry_point.executionFailed(workflow_id, node_id, stacktrace)
+            log_error('ERROR END')
 
     def _convert_data_to_data_frame(self, data):
         spark_sql_session = self.spark_sql_session
@@ -94,6 +98,7 @@ class CodeExecutor(object):
         if spark_version in ["2.0.0", "2.0.1", "2.0.2", "2.1.0", "2.1.1", "2.2.0"]:
             new_sql_context = SQLContext(self.spark_context, new_spark_session)
         else:
+            log_debug("Spark version {} is not supported".format(spark_version))
             raise ValueError("Spark version {} is not supported".format(spark_version))
 
         raw_input_data_frame = DataFrame(
@@ -109,12 +114,23 @@ class CodeExecutor(object):
             'sqlContext': new_sql_context
         }
 
-        exec custom_operation_code in context
+
+        log_debug('executing code... {}\n'.format(context))
+        try:
+            exec(custom_operation_code, context)
+        except ImportError as e:
+            log_debug('ImportError!!! ==> {}\n'.format(e.msg))
+            raise Exception('ImportError!!! ==> {}\n'.format(e.msg))
+        log_debug('FINISH\n')
 
         output_data = context[self.TRANSFORM_FUNCTION_NAME](input_data_frame)
         try:
             output_data_frame = self._convert_data_to_data_frame(output_data)
         except:
+            log_debug('Operation returned {} instead of a DataFrame'.format(output_data) + \
+                ' (or pandas.DataFrame, single value, tuple/list of single values,' + \
+                ' tuple/list of tuples/lists of single values) (pandas library available: ' + \
+                str(self.is_pandas_available) + ').')
             raise Exception('Operation returned {} instead of a DataFrame'.format(output_data) + \
                 ' (or pandas.DataFrame, single value, tuple/list of single values,' + \
                 ' tuple/list of tuples/lists of single values) (pandas library available: ' + \
@@ -138,7 +154,9 @@ class CodeExecutor(object):
         except SyntaxError:
             return False
 
-        return any(filter(is_transform_function, parsed.body))
+        is_valid = any(filter(is_transform_function, parsed.body))
+        log_debug('Valid code? {}: {}'.format(is_valid, custom_operation_code))
+        return is_valid
 
     # noinspection PyClassHasNoInit
     class Java:

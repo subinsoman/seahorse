@@ -7,6 +7,12 @@ RUN wget -q https://bootstrap.pypa.io/get-pip.py && python2.7 get-pip.py
 RUN pip2 install pika ipykernel
 RUN pip install pika ipykernel
 
+#RUN /opt/conda/bin/pip install pika ipykernel
+
+#RUN /opt/conda/bin/conda install --yes -c conda-forge jupyter_contrib_nbextensions ipywidgets
+#RUN /opt/conda/bin/jupyter contrib nbextension install --sys-prefix
+#RUN /opt/conda/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
 COPY code/forwarding_kernel/ /usr/local/share/jupyter/kernels/pyspark/
 COPY code/rabbit_mq_client.py \
      code/socket_forwarder.py \
@@ -28,6 +34,9 @@ COPY seahorse_notebook_path /opt/conda/lib/python3.5/site-packages/
 COPY execute_saver /opt/conda/lib/python3.5/site-packages/execute_saver
 COPY headless_notebook_handler.py /opt/conda/lib/python3.5/site-packages/headless_notebook_handler/
 
+COPY custom-start.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/custom-start.sh
+
 EXPOSE 8888
 
 ENV MQ_USER guest
@@ -36,4 +45,4 @@ ENV HEARTBEAT_INTERVAL 2.0
 ENV MISSED_HEARTBEAT_LIMIT 30
 
 ENTRYPOINT ["tini", "--"]
-CMD ["start-notebook.sh"]
+CMD ["custom-start.sh"]

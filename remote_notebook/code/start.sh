@@ -107,10 +107,14 @@ PYTHON_DIRECTORY=$(dirname $(dirname $PYTHON_BINARY))
 export PATH=$PYTHON_DIRECTORY/bin:$PATH
 export LOCAL_PATH=$(pwd)/local-packages
 
-export PYTHONPATH="$LOCAL_PATH/$PYTHON_DIRECTORY/lib/python2.7/site-packages/:$ADDITIONAL_PYTHON_PATH"
+#export PYTHONPATH="$LOCAL_PATH/$PYTHON_DIRECTORY/lib/python2.7/site-packages/:$ADDITIONAL_PYTHON_PATH"
+export PYTHONPATH="$LOCAL_PATH/:$PYTHON_DIRECTORY/lib/python3.6/site-packages/:$ADDITIONAL_PYTHON_PATH"
 echo "PYTHONPATH=$PYTHONPATH"
-
+echo "PYTHON_BINARY=$PYTHON_BINARY"
 sed -i s#PYTHON_BINARY#"$PYTHON_BINARY"# executing_kernels/python/kernel.json
+
+echo "****====****==== $PYTHON_BINARY OOOOOOOOOO LLLLLLL AAAAAAAA ***+++***"
+echo "***+++***+++                                                ***+++***"
 
 echo "start executing_kernel_manager"
 exec $PYTHON_BINARY executing_kernels/executing_kernel_manager.py \

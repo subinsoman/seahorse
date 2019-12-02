@@ -88,6 +88,10 @@
     <level value="WARN"/>
   </logger>
 
+  <logger name="ai.deepsense">
+    <level value="DEBUG"/>
+  </logger>
+
   <logger name="org.spark_project.jetty">
     <level value="WARN"/>
   </logger>

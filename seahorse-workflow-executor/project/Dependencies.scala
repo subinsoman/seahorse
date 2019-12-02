@@ -104,7 +104,7 @@ object Dependencies {
     "typesafe.com" at "http://repo.typesafe.com/typesafe/repo/",
     "sonatype.org" at "https://oss.sonatype.org/content/repositories/releases",
     "spray.io"     at "http://repo.spray.io",
-    "The New Motion Public Repo" at "http://nexus.thenewmotion.com/content/groups/public/",
+    "The New Motion Public Repo" at "https://nexus.thenewmotion.com/content/repositories/releases-public",
     "central.maven.org" at "http://central.maven.org/maven2/"
   )
 

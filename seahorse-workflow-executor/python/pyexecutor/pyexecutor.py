@@ -76,6 +76,7 @@ class PyExecutor(object):
             java_spark_session = java_spark_sql_session.getSparkSession()
             spark_sql_session = SparkSession(spark_context, java_spark_session)
         else:
+            log_error("Spark version {} is not supported".format(spark_version))
             raise ValueError("Spark version {} is not supported".format(spark_version))
 
         return spark_context, spark_sql_session
@@ -105,6 +106,7 @@ class PyExecutor(object):
             gateway.close()
             return None
 
+        log_debug('Java Gateway initialized {}'.format(gateway))
         return gateway
 
 
@@ -116,8 +118,10 @@ def main():
     gateway_address = args.gateway_address.split(':')
     gateway_address = (gateway_address[0], int(gateway_address[1]))
 
+    log_debug('Initializing PyExecutor at {}'.format(gateway_address))
     py_executor = PyExecutor(gateway_address=gateway_address)
     py_executor.run()
+    log_debug('PyExecutor ended!')
 
 
 if __name__ == '__main__':

@@ -43,18 +43,20 @@ class RabbitMQClient(Logging):
                                     body=message)
 
     def subscribe(self, topic, handler):
-        queue_name = self._channel.queue_declare(exclusive=True).method.queue
+        queue_name = self._channel.queue_declare(queue='', exclusive=True).method.queue
+        self.logger.info('===+++===+++=== SUBSCRIBE {} ===+++===+++==='.format(queue_name))
         self._channel.queue_bind(exchange=self._exchange,
                                  queue=queue_name,
                                  routing_key=topic)
 
-        self._channel.basic_consume(handler, queue=queue_name)
+        self._channel.basic_consume(queue_name, handler)
 
         if not self._consumer_thread.is_alive():
             self._reset_consumer_thread(start=True)
 
     def consume(self, inactivity_timeout, handler, timeout_handler):
-        queue_name = self._channel.queue_declare(exclusive=True).method.queue
+        queue_name = self._channel.queue_declare(queue='', exclusive=True).method.queue
+        self.logger.info('===+++===+++=== CONSUME {} ===+++===+++==='.format(queue_name))
         self._channel.queue_bind(exchange=self._exchange,
                                  queue=queue_name)
         for message in self._channel.consume(queue=queue_name,

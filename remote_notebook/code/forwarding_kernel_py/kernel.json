@@ -2,14 +2,14 @@
   "display_name": "PySpark",
   "language": "python",
   "argv": [
-    "/usr/bin/python",
+    "/opt/conda/bin/python",
     "-m",
     "forwarding_kernel",
     "-f",
     "{connection_file}"
   ],
   "env": {
-    "PYTHONPATH": "/usr/local/share/jupyter/kernels/pyspark:/usr/local/lib/python2.7/site-packages",
+    "PYTHONPATH": "/usr/local/share/jupyter/kernels/pyspark:/opt/conda/lib/python3.6/site-packages",
     "KERNEL_NAME": "PythonExecutingKernel"
   }
 }

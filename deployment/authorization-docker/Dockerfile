@@ -5,10 +5,19 @@ ENV H2_VERSION 1.4.192
 
 # build-essential gcc ruby-dev rubygems libssl-dev packages are needed by cf-uaac
 # get moreutils for sponge
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y ruby ruby-dev rubygems mailutils build-essential openssl zip && \
-    gem install cf-uaac && \
-    apt-get install -y moreutils && \
+
+RUN echo "deb [check-valid-until=no] http://cdn-fastly.deb.debian.org/debian jessie main" > /etc/apt/sources.list.d/jessie.list
+RUN echo "deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/jessie-backports.list
+# RUN sed -i '/deb http:\/\/deb.debian.org\/debian jessie-updates main/d' /etc/apt/sources.list
+RUN sed -i '/deb http:\/\/\(deb\|httpredir\).debian.org\/debian jessie.* main/d' /etc/apt/sources.list
+
+RUN apt-get -o Acquire::Check-Valid-Until=false update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y ruby ruby-dev rubygems mailutils build-essential openssl zip
+
+RUN gem install public_suffix -v '<3.0' && \
+    gem install cf-uaac -v 4.0.0
+
+RUN apt-get install -y moreutils && \
     apt-get clean && \
     apt-get autoremove && \
     rm -rf /var/lib/apt/lists/*

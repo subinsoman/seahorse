@@ -30,7 +30,7 @@ dockerfile in docker := {
     user("root")
     workDir("/opt/docker")
 
-    runRaw("/opt/conda/bin/pip install pika==0.10.0")
+    runRaw("/opt/conda/bin/pip install pika==1.1.0")
 
     // Add Tini - so the python zombies can be collected
     env("TINI_VERSION", tiniVersion)

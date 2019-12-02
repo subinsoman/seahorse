@@ -15,7 +15,13 @@
 
 import base64
 import json
-import urllib2
+
+try:
+    from urllib.request import urlopen
+    from urllib.request import Request
+except ImportError:
+    from urllib2 import urlopen
+    from urllib2 import Request
 
 from utils import Logging
 from seahorse_notebook_path import SeahorseNotebookPath
@@ -47,7 +53,7 @@ class NotebookServerClient(Logging):
 
     def restart_kernel(self):
         # 'data' specified to make it a POST request
-        urllib2.urlopen("http://{}/jupyter/api/kernels/{}/restart".format(self._notebook_server_location,
+        urlopen("http://{}/jupyter/api/kernels/{}/restart".format(self._notebook_server_location,
                                                                           self._kernel_id), "")
 
     def stop_kernel(self):
@@ -60,9 +66,9 @@ class NotebookServerClient(Logging):
         self.logger.debug("Got session: {}".format(session))
         url = "{}/{}".format(self._api_url, session['id'])
         self.logger.debug("Preparing DELETE request to {}".format(url))
-        request = urllib2.Request(url)
+        request = Request(url)
         request.get_method = lambda: 'DELETE'
-        result = urllib2.urlopen(request)
+        result = urlopen(request)
         self.logger.debug("DELETE returned: {}".format(result))
 
     def _get_my_session(self):
@@ -74,7 +80,8 @@ class NotebookServerClient(Logging):
         raise Exception('Session matching kernel ID ' + self._kernel_id + 'was not found.')
 
     def _get_sessions(self):
-        response = urllib2.urlopen(self._api_url).read()
-        return json.loads(response)
+        response = urlopen(self._api_url).read()
+        self.logger.info("===++++====++++====++++ HEYYYYYYYYY!!! {} \n\n\n".format(response.decode('utf-8')))
+        return json.loads((response.decode('utf-8') if response.__class__ == bytes else response))
 
 

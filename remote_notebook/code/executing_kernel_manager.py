@@ -139,7 +139,7 @@ class ExecutingKernelManager(Logging):
         def with_replaced_key(real_factory):
             def hacked_factory(**kwargs):
                 km = real_factory(**kwargs)
-                km.session.key = signature_key
+                km.session.key = signature_key.encode('utf-8') if type(signature_key) != bytes else signature_key
                 return km
 
             return hacked_factory

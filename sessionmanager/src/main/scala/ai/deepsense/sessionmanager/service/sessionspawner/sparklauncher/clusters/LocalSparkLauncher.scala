@@ -32,7 +32,7 @@ private [clusters] object LocalSparkLauncher {
             config: SparkLauncherConfig,
             clusterConfig: ClusterDetails,
             args: SparkOptionsMultiMap): SparkLauncher = {
-    new SparkLauncher(env(config, clusterConfig))
+    new SparkLauncher(env(config, clusterConfig.copy(userIP = "0.0.0.0")))
       .setSparkArgs(args)
       .setVerbose(true)
       .setMainClass(config.className)

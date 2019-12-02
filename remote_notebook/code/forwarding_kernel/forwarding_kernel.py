@@ -162,6 +162,7 @@ class ForwardingKernel(IPythonKernel, Logging):
         # by Session Executor. We should use input frame of notebook node, because in this case, the
         # operation is able to register the incoming dataframe as its input in dataFrameStorage.
         dataframe_storage_type = 'output' if self.argv.seahorse_notebook_path is None else 'input'
+        self.logger.info("===***===*** STARTING KERNEL {} with ID {}: {} {} {} ===***===***".format(KERNEL_NAME, self._kernel_id, dataframe_storage_type, self._node_id, self._port_number))
         self._rabbit_management_sender_client.send({
             'type': 'start_kernel',
             'kernel_id': self._kernel_id,
@@ -177,17 +178,21 @@ class ForwardingKernel(IPythonKernel, Logging):
         self._rabbit_listener.subscribe(topic=self.EXECUTION_SUBSCRIPTION_TOPIC.format(kernel_id=self._kernel_id),
                                         handler=self._handle_execution_message_from_rabbit)
 
-        while not any([f.received_message_from_rabbit for f in self._socket_forwarders.itervalues()]):
+        sock_forwarder_values = self._socket_forwarders.itervalues() if 'itervalues' in dir(dict) else self._socket_forwarders.values()
+        while not any([f.received_message_from_rabbit for f in sock_forwarder_values]):
+            self.logger.info('===***===*** Still waiting for executing kernel ===***===***')
             self.logger.debug('Still waiting for executing kernel')
             time.sleep(.1)
 
-        for forwarder in self._socket_forwarders.itervalues():
+        for forwarder in sock_forwarder_values:
             forwarder.start()
 
         self.logger.debug('Started!')
+        self.logger.info('===***===*** Started! ===***===***')
 
     def _exit(self, msg):
         self.logger.debug(msg)
+        self.logger.info('===***===*** EXITING because: {}'.format(msg))
         sys.exit(1)
 
     @property

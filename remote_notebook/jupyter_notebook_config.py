@@ -49,4 +49,4 @@ c.SVG2PDFPreprocessor.enabled = True
 c.CSSHTMLHeaderPreprocessor.enabled = True
 c.LatexPreprocessor.enabled = True
 c.HighlightMagicsPreprocessor.enabled = True
-
+c.MappingKernelManager.kernel_info_timeout = 300
