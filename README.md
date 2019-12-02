@@ -36,6 +36,12 @@ A good place to start using Seahorse is the [basic examples](http://seahorse.dee
 
 * Before deploying the platform using docker compose, create a folder with name `python-libs` in the same directory. Here you can place all your custom python libraries that you want to use within the platform
 * There's a custom [docker-compose.yml](slr/docker-compose.yml) file within the `slr` folder ready to be used as deployment script once you build the project
+* Once seahorse is deployed from scratch, you must copy the [setup-env.sh](slr/setup-env.sh) within the `data` folder. Then, launch an instance of bash (docker exec -it <container-id> bash) for the `sessionmanager` container and run this script as
+  
+  ```bash
+  sh /resources/data/setup-env.sh`
+  ```
+
 * Custom operations must be placed within the `jars` folder created in the same folder as the `docker-compose.yml`
 * [Log4j.xml](seahorse-workflow-executor/commons/src/main/resources/log4j.xml) has DEBUG set by default for all `ai.deepsense` packages
 * If you want to see logs from python transformations, launch an instance of bash (docker exec -it <container-id> bash) for the `sessionmanager` container and watch for the `/opt/docker/pyexecutor.log` file
