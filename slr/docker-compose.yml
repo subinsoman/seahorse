@@ -1,0 +1,264 @@
+networks:
+  default:
+    ipam:
+      config:
+        - gateway: 10.255.4.1
+          subnet: 10.255.4.0/24
+      driver: default
+services:
+  authorization:
+    depends_on:
+      - database
+    environment:
+      ENABLE_AUTHORIZATION: 'false'
+      JDBC_URL: jdbc:h2:tcp://database:1521/uaa;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1
+      SEAHORSE_ADMIN_EMAIL: seahorse-admin@deepsense.ai
+    image: seahorse-authorization:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    links:
+      - database
+    networks:
+      default:
+        ipv4_address: 10.255.4.10
+    ports: []
+    restart: always
+  database:
+    image: seahorse-h2:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    networks:
+      default:
+        ipv4_address: 10.255.4.13
+    ports: []
+    restart: always
+    volumes:
+      - ./h2-data:/opt/h2-data:rw
+  datasourcemanager:
+    depends_on:
+      - database
+    environment:
+      JDBC_URL: jdbc:h2:tcp://database:1521/datasourcemanager;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1
+    image: seahorse-datasourcemanager:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    links:
+      - database
+    networks:
+      default:
+        ipv4_address: 10.255.4.14
+    ports: []
+    restart: always
+  documentation:
+    image: seahorse-documentation:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    networks:
+      default:
+        ipv4_address: 10.255.4.5
+    ports: []
+    restart: always
+  frontend:
+    depends_on:
+      - documentation
+      - workflowmanager
+      - sessionmanager
+      - library
+      - notebooks
+      - rabbitmq
+    environment:
+      API_VERSION: 1.4.4
+      MQ_PASS: 1ElYfGNW
+      MQ_USER: yNNp7VJS
+      PORT: 80
+      SESSION_POLLING_INTERVAL: 1000
+    image: seahorse-frontend:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    links:
+      - documentation
+      - workflowmanager
+      - library
+      - notebooks
+      - rabbitmq
+    networks:
+      default:
+        ipv4_address: 10.255.4.7
+    ports: []
+    restart: always
+  library:
+    image: seahorse-libraryservice:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    networks:
+      default:
+        ipv4_address: 10.255.4.8
+    ports: []
+    restart: always
+    volumes:
+      - ./library:/library
+  mail:
+    image: seahorse-mail:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    networks:
+      default:
+        ipv4_address: 10.255.4.4
+    ports: []
+    restart: always
+  notebooks:
+    depends_on:
+      - rabbitmq
+      - workflowmanager
+    environment:
+      HEARTBEAT_INTERVAL: 2.0
+      JUPYTER_LISTENING_IP: 0.0.0.0
+      JUPYTER_LISTENING_PORT: 8888
+      MISSED_HEARTBEAT_LIMIT: 30
+      MQ_HOST: rabbitmq
+      MQ_PASS: 1ElYfGNW
+      MQ_PORT: 5672
+      MQ_USER: yNNp7VJS
+      WM_AUTH_PASS: 8Ep9GqRr
+      WM_AUTH_USER: oJkTZ8BV
+      WM_URL: http://workflowmanager:60103
+    image: seahorse-notebooks:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    links:
+      - rabbitmq
+      - workflowmanager
+    networks:
+      default:
+        ipv4_address: 10.255.4.11
+    ports: []
+    restart: always
+  proxy:
+    depends_on:
+      - workflowmanager
+      - sessionmanager
+      - datasourcemanager
+      - schedulingmanager
+      - library
+      - notebooks
+      - rabbitmq
+      - frontend
+      - authorization
+      - documentation
+    environment:
+      AUTHORIZATION_HOST: http://authorization:8080
+      DATASOURCE_MANAGER_HOST: http://datasourcemanager:8080
+      DOCUMENTATION_HOST: http://documentation:80
+      ENABLE_AUTHORIZATION: 'false'
+      FORCE_HTTPS: 'false'
+      FRONTEND_HOST: http://frontend:80
+      JUPYTER_HOST: http://notebooks:8888
+      LIBRARY_HOST: http://library:9083
+      PORT: 33321
+      RABBITMQ_HOST: http://rabbitmq:15674
+      SCHEDULING_MANAGER_HOST: http://schedulingmanager:60110
+      SESSION_MANAGER_HOST: http://10.255.4.1:9082
+      WM_AUTH_PASS: 8Ep9GqRr
+      WM_AUTH_USER: oJkTZ8BV
+      WORKFLOW_MANAGER_HOST: http://workflowmanager:60103
+    image: seahorse-proxy:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    links:
+      - workflowmanager
+      - datasourcemanager
+      - schedulingmanager
+      - library
+      - notebooks
+      - rabbitmq
+      - frontend
+      - authorization
+      - documentation
+    networks:
+      default:
+        ipv4_address: 10.255.4.6
+    ports:
+      - 127.0.0.1:33321:33321
+    restart: always
+  rabbitmq:
+    environment:
+      RABBITMQ_PASS: 1ElYfGNW
+      RABBITMQ_USER: yNNp7VJS
+    image: seahorse-rabbitmq:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    networks:
+      default:
+        ipv4_address: 10.255.4.9
+    ports: []
+    restart: always
+  schedulingmanager:
+    depends_on:
+      - database
+      - sessionmanager
+      - workflowmanager
+      - mail
+    environment:
+      JDBC_URL: jdbc:h2:tcp://database:1521/schedulingmanager;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1
+      MAIL_SERVER_HOST: mail
+      MAIL_SERVER_PORT: 25
+      PORT: 60110
+      SEAHORSE_EXTERNAL_URL: http://localhost:33321/
+      SM_URL: http://10.255.4.1:9082
+      WM_AUTH_PASS: 8Ep9GqRr
+      WM_AUTH_USER: oJkTZ8BV
+      WM_URL: http://workflowmanager:60103
+    image: seahorse-schedulingmanager:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    links:
+      - database
+      - workflowmanager
+      - mail
+    networks:
+      default:
+        ipv4_address: 10.255.4.3
+    ports: []
+    restart: always
+  sessionmanager:
+    depends_on:
+      - rabbitmq
+      - workflowmanager
+      - library
+      - database
+    environment:
+      DATASOURCE_SERVER_ADDRESS: http://10.255.4.14:8080/datasourcemanager/v1/
+      JDBC_URL: jdbc:h2:tcp://10.255.4.13:1521/sessionmanager;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1
+      MAIL_SERVER_HOST: 10.255.4.4
+      MAIL_SERVER_PORT: 25
+      MQ_HOST: 10.255.4.9
+      MQ_PASS: 1ElYfGNW
+      MQ_PORT: 5672
+      MQ_USER: yNNp7VJS
+      NOTEBOOK_SERVER_ADDRESS: http://10.255.4.11:8888
+      SM_HOST: 10.255.4.1
+      SM_PORT: 9082
+      SX_PARAM_PYTHON_DRIVER_BINARY: /opt/conda/bin/python
+      SX_PARAM_PYTHON_EXECUTOR_BINARY: python
+      SX_PARAM_SESSION_EXECUTOR_DEPS_PATH: /opt/docker/we-deps.zip
+      SX_PARAM_SESSION_EXECUTOR_PATH: /opt/docker/we.jar
+      SX_PARAM_SPARK_APPLICATIONS_LOGS_DIR: /spark_applications_logs
+      SX_PARAM_SPARK_RESOURCES_JARS: /resources/jars
+      SX_PARAM_TEMP_DIR: /tmp/seahorse/download
+      SX_PARAM_WM_ADDRESS: 10.255.4.12:60103
+      SX_PARAM_WM_AUTH_PASS: 8Ep9GqRr
+      SX_PARAM_WM_AUTH_USER: oJkTZ8BV
+    image: seahorse-sessionmanager:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    network_mode: host
+    ports:
+     - 4040:4040
+    restart: always
+    volumes:
+      - ./data:/resources/data
+      - ./jars:/resources/jars
+      - ./R_Libs:/opt/R_Libs
+      - ./spark_applications_logs:/spark_applications_logs:rw
+      - ./library:/library
+      - ./python-libs:/opt/docker/python-libs
+  workflowmanager:
+    depends_on:
+      - database
+      - datasourcemanager
+    environment:
+      DATASOURCE_SERVER_ADDRESS: http://datasourcemanager:8080/datasourcemanager/v1/
+      JDBC_URL: jdbc:h2:tcp://database:1521/workflowmanager;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1
+      WM_AUTH_PASS: 8Ep9GqRr
+      WM_AUTH_USER: oJkTZ8BV
+      WM_HOST: 0.0.0.0
+      WM_PORT: 60103
+    image: seahorse-workflowmanager:a3293e6f5d354d61f8c4e0dec00ed8a888e969f6
+    links:
+      - database
+      - datasourcemanager
+    networks:
+      default:
+        ipv4_address: 10.255.4.12
+    ports: []
+    restart: always
+    volumes:
+      - ./jars:/resources/jars
+version: '2'
+volumes: {}
