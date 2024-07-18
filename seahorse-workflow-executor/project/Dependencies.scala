@@ -63,7 +63,8 @@ object Library {
   val log4JExtras = "log4j" % "apache-log4j-extras" % "1.2.17"
   val nscalaTime = "com.github.nscala-time" %% "nscala-time" % Version.nsscalaTime
   val mockitoCore = "org.mockito" % "mockito-core" % Version.mockito
-  val rabbitmq = "com.thenewmotion.akka" %% "akka-rabbitmq" % "2.2" excludeAkkaActor
+  //val rabbitmq = "com.thenewmotion.akka" %% "akka-rabbitmq" % "2.2" excludeAkkaActor
+  val rabbitmq = "com.thenewmotion" % "akka-rabbitmq_2.11" % "3.0.0" excludeAkkaActor
   val reflections = "org.reflections" % "reflections" % "0.9.11"
   val scalacheck = "org.scalacheck" %% "scalacheck" % Version.scalacheck
   val scalate = "org.scalatra.scalate" %% "scalate-core" % "1.7.1"
@@ -105,7 +106,7 @@ object Dependencies {
     "sonatype.org" at "https://oss.sonatype.org/content/repositories/releases",
     "spray.io"     at "http://repo.spray.io",
     "The New Motion Public Repo" at "https://nexus.thenewmotion.com/content/repositories/releases-public",
-    "central.maven.org" at "http://central.maven.org/maven2/"
+    "Maven Central" at "https://repo1.maven.org/maven2/"
   )
 
   class Spark(version: String) {

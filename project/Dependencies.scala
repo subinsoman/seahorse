@@ -74,7 +74,8 @@ object Library {
   val mockitoCore = "org.mockito" % "mockito-core" % Version.mockito
   val nscalaTime = "com.github.nscala-time" %% "nscala-time" % Version.nsscalaTime
   val quartz = "org.quartz-scheduler" % "quartz" % "2.3.0"
-  val rabbitmq = "com.thenewmotion.akka" %% "akka-rabbitmq" % "2.2" excludeAkkaActor
+  val rabbitmq = "com.thenewmotion" % "akka-rabbitmq_2.11" % "3.0.0" excludeAkkaActor
+  //val rabbitmq = "com.thenewmotion.akka" %% "akka-rabbitmq" % "2.2" excludeAkkaActor
   val scalaReflect = "org.scala-lang" % "scala-reflect" % Version.scala
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalatest
   val scalatra = "org.scalatra" %% "scalatra" % Version.scalatra
@@ -104,11 +105,12 @@ object Dependencies {
 
   import Library._
 
-  val resolvers = Seq(
+ val resolvers = Seq(
     "sonatype.org"           at "https://oss.sonatype.org/content/repositories/releases",
     "spray.io"               at "http://repo.spray.io",
     "The New Motion Public Repo" at "https://nexus.thenewmotion.com/content/repositories/releases-public",
-    Classpaths.typesafeReleases
+    Classpaths.typesafeReleases,
+    "Maven Central"          at "https://repo1.maven.org/maven2/"
   )
 
   object Spark {

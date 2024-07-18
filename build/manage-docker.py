@@ -79,7 +79,7 @@ image_confs = [
     simple_docker_with_spark_version("seahorse-spark", "deployment/spark-docker"),
     #simple_command_docker("seahorse-mesos-spark", "./build/build_spark_docker_mesos.sh"),
     #sbt_docker("seahorse-schedulingmanager", "schedulingmanager"),
-    #sbt_docker('seahorse-sessionmanager', "sessionmanager"),
+    sbt_docker('seahorse-sessionmanager', "sessionmanager"),
     #sbt_docker("seahorse-workflowmanager", "workflowmanager"),
     #sbt_docker("seahorse-datasourcemanager", "datasourcemanager"),
     #sbt_docker("seahorse-libraryservice", "libraryservice"),

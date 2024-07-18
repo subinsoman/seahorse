@@ -15,7 +15,7 @@ pythonAndRDeps := {
 pythonAndRDeps := (pythonAndRDeps dependsOn weJar.toTask).value
 
 dockerBaseImage :=
-  s"seahorse-mesos-spark:${SbtGit.GitKeys.gitHeadCommit.value.get}"
+  s"seahorse-spark:${SbtGit.GitKeys.gitHeadCommit.value.get}"
 
 lazy val tiniVersion = "v0.10.0"
 

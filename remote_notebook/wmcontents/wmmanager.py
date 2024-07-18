@@ -46,7 +46,7 @@ class WMContentsManager(ContentsManager):
         'python': {
             'display_name': 'PySpark',
             'name': 'forwarding_kernel_py',
-            'version': '3.5.2'
+            'version': '3.7.9'
         }
     }
 
