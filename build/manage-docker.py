@@ -73,21 +73,21 @@ def git_sha():
 
 
 image_confs = [
-    simple_docker("seahorse-proxy", "proxy"),
-    simple_docker("seahorse-rabbitmq", "deployment/rabbitmq"),
-    simple_docker("seahorse-h2", "deployment/h2-docker"),
+    #simple_docker("seahorse-proxy", "proxy"),
+    #simple_docker("seahorse-rabbitmq", "deployment/rabbitmq"),
+    #simple_docker("seahorse-h2", "deployment/h2-docker"),
     simple_docker_with_spark_version("seahorse-spark", "deployment/spark-docker"),
-    simple_command_docker("seahorse-mesos-spark", "./build/build_spark_docker_mesos.sh"),
-    sbt_docker("seahorse-schedulingmanager", "schedulingmanager"),
-    sbt_docker('seahorse-sessionmanager', "sessionmanager"),
-    sbt_docker("seahorse-workflowmanager", "workflowmanager"),
-    sbt_docker("seahorse-datasourcemanager", "datasourcemanager"),
-    sbt_docker("seahorse-libraryservice", "libraryservice"),
-    simple_docker("seahorse-notebooks", "remote_notebook"),
-    simple_docker("seahorse-authorization", "deployment/authorization-docker"),
-    simple_docker("seahorse-mail", "deployment/exim"),
-    simple_command_docker("seahorse-frontend", "frontend/docker/build-frontend.sh"),
-    simple_command_docker("seahorse-documentation", "./build/build_documentation_docker.sh")
+    #simple_command_docker("seahorse-mesos-spark", "./build/build_spark_docker_mesos.sh"),
+    #sbt_docker("seahorse-schedulingmanager", "schedulingmanager"),
+    #sbt_docker('seahorse-sessionmanager', "sessionmanager"),
+    #sbt_docker("seahorse-workflowmanager", "workflowmanager"),
+    #sbt_docker("seahorse-datasourcemanager", "datasourcemanager"),
+    #sbt_docker("seahorse-libraryservice", "libraryservice"),
+    #simple_docker("seahorse-notebooks", "remote_notebook"),
+    #simple_docker("seahorse-authorization", "deployment/authorization-docker"),
+    #simple_docker("seahorse-mail", "deployment/exim"),
+    #simple_command_docker("seahorse-frontend", "frontend/docker/build-frontend.sh"),
+    #simple_command_docker("seahorse-documentation", "./build/build_documentation_docker.sh")
 ]
 image_conf_by_name = {conf.docker_image_name: conf for conf in image_confs}
 

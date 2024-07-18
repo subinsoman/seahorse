@@ -1,28 +1,29 @@
 # Copyright (c) 2016, CodiLime Inc.
-
-FROM ubuntu:16.04
-
+FROM ubuntu:24.04
 ARG SPARK_VERSION
 ARG HADOOP_VERSION
 
 # Install packages
-# libcurl4-openssl-dev and libssl-dev are needed for IRkernel dependencies
-# gfortran liblapack-dev liblapack3 libopenblas-base libopenblas-dev are needed for machine learning R libraries
-# RUN apt-get update && \
-    # apt-get install -y build-essential openjdk-8-jre wget curl bzip2 openssh-server openssh-client libsm6 \
-    # libcurl4-openssl-dev libssl-dev && \
-    # apt-get install -y gfortran liblapack-dev liblapack3 libopenblas-base libopenblas-dev && \
-    # apt-get clean && \
-    # apt-get autoremove && \
-    # rm -rf /var/lib/apt/lists/*
 RUN sed -i 's/archive.ubuntu.com/kr.archive.ubuntu.com/g' /etc/apt/sources.list
-RUN apt-get update
-RUN apt-get install -y build-essential openjdk-8-jre wget curl bzip2 openssh-server openssh-client libsm6 \
-    libcurl4-openssl-dev libssl-dev
-RUN apt-get install -y gfortran liblapack-dev liblapack3 libopenblas-base libopenblas-dev && \
-    apt-get clean && \
-    apt-get autoremove && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential \
+    openjdk-11-jre \
+    wget \
+    curl \
+    bzip2 \
+    openssh-server \
+    openssh-client \
+    libsm6 \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    gfortran \
+    liblapack-dev \
+    liblapack3 \
+    libopenblas-base \
+    libopenblas-dev \
+    && apt-get clean \
+    && apt-get autoremove \
+    && rm -rf /var/lib/apt/lists/*
 
 # Setup passwordless SSH
 RUN ssh-keygen -q -N "" -t rsa -f /root/.ssh/id_rsa
@@ -40,30 +41,19 @@ RUN wget -q -O - \
   && rm -rf $SPARK_HOME/examples $SPARK_HOME/ec2 \
   && rm -rf $SPARK_HOME/lib/spark-examples*.jar
 
-# Install conda
-#Miniconda3-4.3.27.1-Linux-x86_64.sh
-RUN wget -q -O /tmp/Miniconda2-4.3.27.1-Linux-x86_64.sh \
-    https://repo.anaconda.com/miniconda/Miniconda3-4.1.11-Linux-x86_64.sh && \
-    bash /tmp/Miniconda2-4.3.27.1-Linux-x86_64.sh -f -b -p /opt/conda && \
-    rm /tmp/Miniconda2-4.3.27.1-Linux-x86_64.sh && \
-# Install python packages
-# Install tornado in version 4.1
-# jupyter_client/ioloop/restarter.py (jupyter_client < 5.1) needs tornado in that version
+# Install Miniconda and Python 3.7
+RUN wget -q -O /tmp/Miniconda3-latest-Linux-x86_64.sh \
+    https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash /tmp/Miniconda3-latest-Linux-x86_64.sh -f -b -p /opt/conda && \
+    rm /tmp/Miniconda3-latest-Linux-x86_64.sh
+
+# Install Python packages
+RUN /opt/conda/bin/conda install --yes python=3.7 && \
     /opt/conda/bin/conda install --yes \
-    # 'tornado=4.1' 'ipykernel=4.3.1' 'jupyter_client=4.3.0' 'pandas=0.16*' 'matplotlib=1.4*' \
-    # 'scipy=0.15*' 'seaborn=0.6*' 'scikit-learn=0.16*' 'libgfortran=1' && \
-    'tornado=4.5.2' 'ipykernel=4.6.1' 'jupyter_client' 'pandas' 'matplotlib' \
+    'tornado' 'ipykernel' 'jupyter_client' 'pandas' 'matplotlib' \
     'scipy' 'seaborn' 'scikit-learn' 'libgfortran' && \
-    # /opt/conda/bin/conda install -c conda-forge jupyter_contrib_nbextensions ipywidgets && \
-    # /opt/conda/bin/jupyter contrib nbextension install --sys-prefix && \
-    # /opt/conda/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension && \
-# Install r packages
-    /opt/conda/bin/conda install --yes -c r r-essentials && \
-    # /opt/conda/bin/conda install --yes -c r r-base='3.3.1 1' && \
-    /opt/conda/bin/conda install --yes -c r r-base && \
-    # /opt/conda/bin/conda install --yes -c r r-irkernel=0.7 && \
-    /opt/conda/bin/conda install --yes -c r r-irkernel && \
     /opt/conda/bin/conda clean --all --yes
+
 
 
 # Flag to use old g++ ABI (necessary for compilation of r-igraph package)
