@@ -1,0 +1,16 @@
+ipykernel==4.3.1
+ipython==5.6.0
+ipython-genutils==0.2.0
+jupyter-client==4.3.0
+jupyter-core==4.4.0
+numpy
+pandas
+python-dateutil==2.7.2
+pytz==2018.3
+pyzmq==17.0.0
+requests==2.18.4
+tornado==4.1
+traitlets==4.3.2
+urllib3==1.22
+wcwidth==0.1.7
+matplotlib

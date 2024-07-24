@@ -18,12 +18,11 @@ package ai.deepsense.deeplang.doperations
 
 import java.io._
 import java.net.UnknownHostException
-import java.util.UUID
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 import scala.reflect.runtime.{universe => ru}
-
 import org.apache.spark.sql.{DataFrame => SparkDataFrame}
-
 import ai.deepsense.commons.utils.Version
 import ai.deepsense.deeplang.DOperation.Id
 import ai.deepsense.deeplang.documentation.OperationDocumentation
@@ -39,7 +38,6 @@ import ai.deepsense.deeplang.params.choice.ChoiceParam
 import ai.deepsense.deeplang.params.{Param, Params}
 import ai.deepsense.deeplang.{DKnowledge, DOperation0To1, ExecutionContext}
 
-// TODO Remake this case class into class
 case class ReadDataFrame()
     extends DOperation0To1[DataFrame]
     with ReadDataFrameParameters
@@ -57,15 +55,15 @@ case class ReadDataFrame()
   setDefault(storageType, new InputStorageTypeChoice.File())
 
   override def execute()(context: ExecutionContext): DataFrame = {
-    implicit val ec = context
+    implicit val ec: ExecutionContext = context
 
     try {
       val dataframe = getStorageType() match {
         case jdbcChoice: InputStorageTypeChoice.Jdbc => readFromJdbc(jdbcChoice)
-        case googleSheet: InputStorageTypeChoice.GoogleSheet => DataFrameFromGoogleSheetReader.readFromGoogleSheet(
-          googleSheet
-        )
-        case fileChoice: InputStorageTypeChoice.File => DataFrameFromFileReader.readFromFile(fileChoice)
+        case googleSheet: InputStorageTypeChoice.GoogleSheet =>
+          DataFrameFromGoogleSheetReader.readFromGoogleSheet(googleSheet)
+        case fileChoice: InputStorageTypeChoice.File =>
+          DataFrameFromFileReader.readFromFile(fileChoice)
       }
       DataFrame.fromSparkDataFrame(dataframe)
     } catch {
@@ -74,22 +72,43 @@ case class ReadDataFrame()
     }
   }
 
-  override def inferKnowledge()(context: InferContext):
-      (DKnowledge[DataFrame], InferenceWarnings) = {
+  override def inferKnowledge()(context: InferContext): (DKnowledge[DataFrame], InferenceWarnings) = {
     FilePathHasValidFileScheme.validate(this)
     ParquetSupportedOnClusterOnly.validate(this)
     super.inferKnowledge()(context)
   }
 
-  private def readFromJdbc
-      (jdbcChoice: InputStorageTypeChoice.Jdbc)
-      (implicit context: ExecutionContext): SparkDataFrame =
-    context.sparkSQLSession
-      .read.format("jdbc")
-      .option("driver", jdbcChoice.getJdbcDriverClassName)
-      .option("url", jdbcChoice.getJdbcUrl)
+  private def readFromJdbc(jdbcChoice: InputStorageTypeChoice.Jdbc)(implicit context: ExecutionContext): SparkDataFrame = {
+    val jdbcUrl = jdbcChoice.getJdbcUrl
+
+    // Function to extract query parameters from URL
+    def extractQueryParam(url: String, param: String): Option[String] = {
+      val decodedUrl = URLDecoder.decode(url, StandardCharsets.UTF_8.name())
+      val queryParams = decodedUrl.split("\\?", 2).lift(1).getOrElse("")
+      queryParams.split("&").collect {
+        case s if s.startsWith(s"$param=") => s.split("=", 2).lift(1)
+      }.flatten.headOption
+    }
+
+    // Extracting parameters with null as default value
+    val partitionColumn = extractQueryParam(jdbcUrl, "partitionColumn").orNull
+    val lowerBound = extractQueryParam(jdbcUrl, "lowerBound").orNull
+    val upperBound = extractQueryParam(jdbcUrl, "upperBound").orNull
+    val numPartitions = extractQueryParam(jdbcUrl, "numPartitions").orNull
+
+    val reader = context.sparkSQLSession.read.format("jdbc")
+      .option("driver", jdbcChoice.getJdbcDriverClassName) // Assuming there is a method to get the driver class name
+      .option("url", jdbcUrl)
       .option("dbtable", jdbcChoice.getJdbcTableName)
-      .load()
+
+    // Adding options conditionally based on the presence of parameters
+    val readerWithPartitionColumn = if (partitionColumn != null) reader.option("partitionColumn", partitionColumn) else reader
+    val readerWithLowerBound = if (lowerBound != null) readerWithPartitionColumn.option("lowerBound", lowerBound) else readerWithPartitionColumn
+    val readerWithUpperBound = if (upperBound != null) readerWithLowerBound.option("upperBound", upperBound) else readerWithLowerBound
+    val readerWithNumPartitions = if (numPartitions != null) readerWithUpperBound.option("numPartitions", numPartitions) else readerWithUpperBound
+
+    readerWithNumPartitions.load()
+  }
 
   @transient
   override lazy val tTagTO_0: ru.TypeTag[DataFrame] = ru.typeTag[DataFrame]
@@ -103,7 +122,8 @@ object ReadDataFrame {
 
     val storageType = ChoiceParam[InputStorageTypeChoice](
       name = "data storage type",
-      description = Some("Storage type."))
+      description = Some("Storage type.")
+    )
 
     def getStorageType(): InputStorageTypeChoice = $(storageType)
     def setStorageType(value: InputStorageTypeChoice): this.type = set(storageType, value)
@@ -113,7 +133,8 @@ object ReadDataFrame {
       fileName: String,
       csvColumnSeparator: CsvParameters.ColumnSeparatorChoice,
       csvNamesIncluded: Boolean,
-      csvConvertToBoolean: Boolean) : ReadDataFrame = {
+      csvConvertToBoolean: Boolean
+  ): ReadDataFrame = {
     new ReadDataFrame()
       .setStorageType(
         new InputStorageTypeChoice.File()
@@ -122,6 +143,8 @@ object ReadDataFrame {
             new InputFileFormatChoice.Csv()
               .setCsvColumnSeparator(csvColumnSeparator)
               .setNamesIncluded(csvNamesIncluded)
-              .setShouldConvertToBoolean(csvConvertToBoolean)))
+              .setShouldConvertToBoolean(csvConvertToBoolean)
+          )
+      )
   }
 }

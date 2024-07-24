@@ -1,5 +1,4 @@
 import com.typesafe.sbt.SbtGit
-
 enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging)
 
 lazy val workflowExecutorProject = ProjectRef(file("./seahorse-workflow-executor"), "workflowexecutor")
@@ -30,7 +29,7 @@ dockerfile in docker := {
     user("root")
     workDir("/opt/docker")
 
-    runRaw("/opt/conda/bin/pip install pika==1.1.0")
+    runRaw("/opt/conda/bin/pip install pika==1.3.2")
 
     // Add Tini - so the python zombies can be collected
     env("TINI_VERSION", tiniVersion)

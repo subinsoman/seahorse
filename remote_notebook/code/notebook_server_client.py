@@ -12,27 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import base64
 import json
 
 try:
-    from urllib.request import urlopen
-    from urllib.request import Request
+    from urllib.request import urlopen, Request
 except ImportError:
-    from urllib2 import urlopen
-    from urllib2 import Request
+    from urllib2 import urlopen, Request
 
 from utils import Logging
 from seahorse_notebook_path import SeahorseNotebookPath
 
 
 class NotebookServerClient(Logging):
-    # Passed seahorse_notebook_path enforces NotebookServerClient to use this path for finding/saving
-    # notebook. When seahorse_notebook_path is not defined then NotebookServerClient will connect to session
-    # endpoint to find its path
     def __init__(self, nb_host, nb_port, kernel_id, seahorse_notebook_path=None):
-        super(NotebookServerClient, self).__init__()
+        super().__init__()
         self._nb_host = nb_host
         self._nb_port = nb_port
         self._kernel_id = kernel_id
@@ -41,47 +35,64 @@ class NotebookServerClient(Logging):
         self.seahorse_notebook_path = seahorse_notebook_path
 
     def _get_path(self):
-        if self.seahorse_notebook_path:
-            return self.seahorse_notebook_path
-        else:
-            session = self._get_my_session()
-            return str(session['notebook']['path'])
+        try:
+            if self.seahorse_notebook_path:
+                return self.seahorse_notebook_path
+            else:
+                session = self._get_my_session()
+                return str(session['notebook']['path'])
+        except Exception as e:
+            self.logger.error("Error getting path: {}".format(e))
+            raise
 
     def extract_dataframe_source(self):
-        notebook_path = SeahorseNotebookPath.deserialize(self._get_path())
-        return notebook_path.workflow_id, notebook_path.datasource_node_id, notebook_path.datasource_node_port
+        try:
+            notebook_path = SeahorseNotebookPath.deserialize(self._get_path())
+            return notebook_path.workflow_id, notebook_path.datasource_node_id, notebook_path.datasource_node_port
+        except Exception as e:
+            self.logger.error("Error extracting dataframe source: {}".format(e))
+            raise
 
     def restart_kernel(self):
-        # 'data' specified to make it a POST request
-        urlopen("http://{}/jupyter/api/kernels/{}/restart".format(self._notebook_server_location,
-                                                                          self._kernel_id), "")
+        try:
+            urlopen("http://{}/jupyter/api/kernels/{}/restart".format(self._notebook_server_location, self._kernel_id), "")
+        except Exception as e:
+            self.logger.error("Error restarting kernel: {}".format(e))
+            raise
 
     def stop_kernel(self):
-        # When seahorse_notebook_path is not defined then no session is on notebook server.
-        # We don't have to delete the session.
-        if self.seahorse_notebook_path is not None:
-            return
-        self.logger.debug("Getting session")
-        session = self._get_my_session()
-        self.logger.debug("Got session: {}".format(session))
-        url = "{}/{}".format(self._api_url, session['id'])
-        self.logger.debug("Preparing DELETE request to {}".format(url))
-        request = Request(url)
-        request.get_method = lambda: 'DELETE'
-        result = urlopen(request)
-        self.logger.debug("DELETE returned: {}".format(result))
+        try:
+            if self.seahorse_notebook_path is not None:
+                return
+            self.logger.debug("Getting session")
+            session = self._get_my_session()
+            self.logger.debug("Got session: {}".format(session))
+            url = "{}/{}".format(self._api_url, session['id'])
+            self.logger.debug("Preparing DELETE request to {}".format(url))
+            request = Request(url)
+            request.get_method = lambda: 'DELETE'
+            result = urlopen(request)
+            self.logger.debug("DELETE returned: {}".format(result))
+        except Exception as e:
+            self.logger.error("Error stopping kernel: {}".format(e))
+            raise
 
     def _get_my_session(self):
-        sessions = self._get_sessions()
-        for session in sessions:
-            if session['kernel']['id'] == self._kernel_id:
-                return session
-
-        raise Exception('Session matching kernel ID ' + self._kernel_id + 'was not found.')
+        try:
+            sessions = self._get_sessions()
+            for session in sessions:
+                if session['kernel']['id'] == self._kernel_id:
+                    return session
+            raise Exception('Session matching kernel ID {} was not found.'.format(self._kernel_id))
+        except Exception as e:
+            self.logger.error("Error getting my session: {}".format(e))
+            raise
 
     def _get_sessions(self):
-        response = urlopen(self._api_url).read()
-        self.logger.info("===++++====++++====++++ HEYYYYYYYYY!!! {} \n\n\n".format(response.decode('utf-8')))
-        return json.loads((response.decode('utf-8') if response.__class__ == bytes else response))
-
-
+        try:
+            response = urlopen(self._api_url).read()
+            self.logger.info("Received response: {}".format(response.decode('utf-8')))
+            return json.loads(response.decode('utf-8') if isinstance(response, bytes) else response)
+        except Exception as e:
+            self.logger.error("Error getting sessions: {}".format(e))
+            raise

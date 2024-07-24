@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from utils import started_daemon_thread, Logging
-
 
 class SocketForwarder(Logging):
     """
@@ -26,12 +24,11 @@ class SocketForwarder(Logging):
     """
 
     def __init__(self, stream_name, zmq_socket, to_rabbit_sender):
-        super(SocketForwarder, self).__init__()
+        super().__init__()
         self.stream_name = stream_name
         self.zmq_socket = zmq_socket
         self.to_rabbit_sender = to_rabbit_sender
         self.to_rabbit_forwarding_thread = None
-
         self._received_message_from_rabbit = False
 
     @property
@@ -43,27 +40,38 @@ class SocketForwarder(Logging):
         return self._received_message_from_rabbit
 
     def start(self):
-        self.logger.debug('Started {} SocketForwarder.'.format(self.stream_name))
-        self.to_rabbit_forwarding_thread = started_daemon_thread(target=self.to_rabbit_forwarder)
+        try:
+            self.logger.debug('Started {} SocketForwarder.'.format(self.stream_name))
+            self.to_rabbit_forwarding_thread = started_daemon_thread(target=self.to_rabbit_forwarder)
+        except Exception as e:
+            self.logger.error('Failed to start SocketForwarder for {}: {}'.format(self.stream_name, e))
 
     def forward_to_zmq(self, message):
-        self.logger.debug('[{}] Sending {}'.format(self.stream_name, message))
-        self.zmq_socket.send_multipart(message)
-        self._received_message_from_rabbit = True
+        try:
+            self.logger.debug('[{}] Sending {}'.format(self.stream_name, message))
+            self.zmq_socket.send_multipart(message)
+            self._received_message_from_rabbit = True
+        except Exception as e:
+            self.logger.error('Failed to forward message to ZMQ for {}: {}'.format(self.stream_name, e))
 
     def to_rabbit_forwarder(self):
         while True:
-            message = self.zmq_socket.recv_multipart()
-            self.logger.debug('[{}] Sending {}'.format(self.stream_name, message))
-            self.to_rabbit_sender(message)
-
+            try:
+                message = self.zmq_socket.recv_multipart()
+                self.logger.debug('[{}] Sending {}'.format(self.stream_name, message))
+                self.to_rabbit_sender(message)
+            except Exception as e:
+                self.logger.error('Failed to forward message to Rabbit for {}: {}'.format(self.stream_name, e))
 
 class ToZmqSocketForwarder(SocketForwarder):
     """
-    This subclass of SocketForwarded doesn't forward messages
+    This subclass of SocketForwarder doesn't forward messages
     from ZMQ to Rabbit.
 
     This is useful for sockets that don't support receiving, like PUBs.
     """
     def start(self):
-        self.logger.debug('[{}] NOT starting forwarding to Rabbit'.format(self.stream_name))
+        try:
+            self.logger.debug('[{}] NOT starting forwarding to Rabbit'.format(self.stream_name))
+        except Exception as e:
+            self.logger.error('Failed to log NOT starting forwarding to Rabbit for {}: {}'.format(self.stream_name, e))

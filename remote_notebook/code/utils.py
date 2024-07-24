@@ -34,7 +34,7 @@ def setup_logging(logfile, prefix=''):
             raise
 
     logging.basicConfig(filename=logfile,
-                        format='{} %(asctime)s %(name)s::%(funcName)s: %(message)s'.format(prefix),
+                        format='{} %(asctime)s | %(name)s | %(levelname)s | %(filename)s:%(lineno)d | %(message)s'.format(prefix),
                         level=logging.DEBUG)
 
 

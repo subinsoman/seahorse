@@ -19,12 +19,12 @@ TMPDIR=executing_kernel_tmp
 rm -rf $TMPDIR
 mkdir -p $TMPDIR/executing_kernels/python
 mkdir -p $TMPDIR/executing_kernels/r
-
+mkdir -p $TMPDIR/executing_kernels/seahorse_notebook_path
 # Python Executing Kernel
 cp code/pyspark_kernel/kernel.json $TMPDIR/executing_kernels/python/
 cp code/pyspark_kernel/kernel_init.py $TMPDIR/executing_kernels/python/
 cp code/pyspark_kernel/executing_kernel.py $TMPDIR/executing_kernels/python/
-
+cp seahorse_notebook_path/*.py $TMPDIR/executing_kernels/seahorse_notebook_path/
 # R Executing Kernel
 cp code/sparkr_kernel/kernel.json $TMPDIR/executing_kernels/r/
 cp code/sparkr_kernel/kernel_init.R $TMPDIR/executing_kernels/r/
