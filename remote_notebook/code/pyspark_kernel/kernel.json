@@ -1,0 +1,12 @@
+{
+  "display_name": "PySpark",
+  "language": "python",
+  "argv": [
+    "PYTHON_BINARY",
+    "executing_kernels/python/executing_kernel.py",
+    "-f",
+    "{connection_file}"
+  ],
+  "env": {
+  }
+}

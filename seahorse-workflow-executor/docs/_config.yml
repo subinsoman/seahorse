@@ -1,0 +1,39 @@
+highlighter: pygments
+markdown: kramdown
+
+# For some reason kramdown seems to behave differently on different
+# OS/packages wrt encoding. So we hard code this config.
+kramdown:
+  entity_output: numeric
+
+include:
+  - _static
+  - _modules
+
+exclude:
+  - README.md
+
+collections:
+  casestudies:
+    output: true
+  deployment:
+    output: true
+  reference:
+    output: true
+  licenses:
+    output: true
+
+WORKFLOW_EXECUTOR_SCALA_VERSION: 2.11.8
+WORKFLOW_EXECUTOR_HADOOP_VERSION: 2.7.0
+WORKFLOW_EXECUTOR_SPARK_VERSION: 2.0.2
+
+WORKFLOW_EXECUTOR_GITHUB_URL: https://github.com/deepsense-ai/seahorse
+
+SEAHORSE_EDITOR_ADDRESS: http://localhost:33321
+SEAHORSE_EDITOR_PORT: 33321
+
+PANDAS_LIBRARY_ADDRESS: http://pandas.pydata.org
+
+SPARK_DOCS: https://spark.apache.org/docs/2.0.2
+
+SPARK_ASSEMBLY_PATH: spark-assembly-2.0.2-hadoop2.7.0.jar

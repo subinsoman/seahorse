@@ -1,0 +1,70 @@
+{
+  "workflow": {
+    "nodes": [{
+      "id": "29e42491-df2e-20a8-50e5-701256dafbdd",
+      "operation": {
+        "id": "1a3b32f0-f56d-4c44-a396-29d2dfd43423",
+        "name": "Read Datasource"
+      },
+      "parameters": {
+        "data source": "425c1536-7039-47d7-8db4-5c4e8bb9d742"
+      }
+    }, {
+      "id": "ebee5171-21ee-3cd0-019d-f4e4275fbcf8",
+      "operation": {
+        "id": "e9990168-daf7-44c6-8e0c-fbc50456fbec",
+        "name": "Identity"
+      },
+      "parameters": {
+
+      }
+    }],
+    "connections": [{
+      "from": {
+        "nodeId": "29e42491-df2e-20a8-50e5-701256dafbdd",
+        "portIndex": 0
+      },
+      "to": {
+        "nodeId": "ebee5171-21ee-3cd0-019d-f4e4275fbcf8",
+        "portIndex": 0
+      }
+    }]
+  },
+  "thirdPartyData": {
+    "gui": {
+      "name": "SDK_Identity",
+      "description": "",
+      "predefColors": ["#00B1EB", "#1ab394", "#2f4050", "#f8ac59", "#ed5565", "#DD6D3F"],
+      "nodes": {
+        "29e42491-df2e-20a8-50e5-701256dafbdd": {
+          "uiName": "",
+          "color": "#00B1EB",
+          "coordinates": {
+            "x": 5240,
+            "y": 5080
+          }
+        },
+        "ebee5171-21ee-3cd0-019d-f4e4275fbcf8": {
+          "uiName": "",
+          "color": "#00B1EB",
+          "coordinates": {
+            "x": 5228,
+            "y": 5230
+          }
+        }
+      }
+    },
+    "notebooks": {
+
+    },
+    "datasources": []
+  },
+  "variables": {
+
+  },
+  "id": "8354dfd7-2e2d-437e-be30-f296b8b2df77",
+  "metadata": {
+    "type": "batch",
+    "apiVersion": "1.4.0"
+  }
+}

@@ -1,0 +1,41 @@
+# Copyright (c) 2016, CodiLime Inc.
+FROM nginx:1.10
+
+ENV API_HOST http://localhost
+ENV API_PORT 9080
+ENV SOCKETS_ADDRESS http://localhost:15674/
+ENV NOTEBOOKS_HOST http://localhost:8888
+ENV SESSION_POLLING_INTERVAL 5000
+ENV USER sixdee
+ENV GROUP sixdee
+RUN groupadd -g 1001 ${USER} && \
+    useradd -u 1001 -g ${GROUP} -s /sbin/nologin -M ${GROUP}
+
+RUN mkdir -p /var/cache/nginx && chown -R ${USER}:${GROUP} /var/cache/nginx && \
+    mkdir -p /var/log/nginx  && chown -R ${USER}:${GROUP} /var/log/nginx && \
+    mkdir -p /var/lib/nginx  && chown -R ${USER}:${GROUP} /var/lib/nginx && \
+    touch /run/nginx.pid && chown -R ${USER}:${GROUP} /run/nginx.pid && \
+    mkdir -p /etc/nginx/templates /etc/nginx/ssl/certs && \
+    chown -R ${USER}:${GROUP} /etc/nginx && \
+    chown -R ${USER}:${GROUP} /usr/share/nginx/html && \
+    chown -R ${USER}:${GROUP} /tmp 
+    
+   
+
+
+
+
+COPY dist/ /usr/share/nginx/html
+COPY src/config.js.tmpl /tmp/
+COPY src/run.sh /tmp/
+
+RUN chmod -R 777 /tmp/run.sh && \
+    chmod -R 777 /etc/nginx/conf.d
+
+# Update nginx configuration so it would request browser not to cache index.html
+COPY default.conf /etc/nginx/conf.d/
+RUN sed -i 's/listen\(.*\)80;/listen 8080;/g' /etc/nginx/conf.d/default.conf
+
+USER ${USER}
+ENTRYPOINT [ "/tmp/run.sh" ]
+CMD ["nginx", "-g", "daemon off;"]
