@@ -19,11 +19,11 @@ object Version {
   val apacheCommons = "3.3.2"
   val avro = "1.7.7"
   val guava = "19.0"
-  val guice = "3.0"
+  val guice = "4.0"
   val h2 = "1.4.191"
 //  val json4s = "3.3.0"
    val json4s = "3.4.2"
-  val jclouds = "1.9.0"
+  val jclouds = "2.1.0"
 //  val metricsScala = "3.5.4_a2.3"
   val metricsScala = "3.5.5"
   val mockito = "1.10.19"
@@ -88,6 +88,7 @@ object Library {
   val guava = "com.google.guava"  % "guava" % Version.guava
   val guice = "com.google.inject" % "guice" % Version.guice
   val guiceMultibindings = "com.google.inject.extensions" % "guice-multibindings" % Version.guice
+  val guiceAssistedInject = "com.google.inject.extensions" % "guice-assistedinject" % Version.guice
   val jcloudsKeystone = jclouds("keystone")
   val jettyWebapp = "org.eclipse.jetty" % "jetty-webapp" % "9.3.8.v20160314"
   val metricsScala = "nl.grons" %% "metrics-scala" % Version.metricsScala excludeAkkaActor
@@ -126,6 +127,7 @@ object Library {
   val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Version.log4j2
   val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Version.log4j2
   val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Version.log4j2
+  val log4j12Api = "org.apache.logging.log4j" % "log4j-1.2-api" % Version.log4j2
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.36"
   val mimepull = "org.jvnet.mimepull" % "mimepull" % "1.9.5"
 }
@@ -185,6 +187,7 @@ object Dependencies {
     guava,
     guice,
     guiceMultibindings,
+    guiceAssistedInject,
     jcloudsKeystone,
     metricsScala,
     nscalaTime,
@@ -194,7 +197,11 @@ object Dependencies {
     sprayJson,
     sprayRouting,
     shapeless,
-    slf4j
+
+    slf4j,
+    log4jApi,
+    log4jCore,
+    log4jSlf4jImpl
   ) ++ scalatraAndJetty ++ Seq(akkaTestkit, mockitoCore, scalatest, sprayTestkit).map(_ % Test)
 
   val workflowmanager = Spark.components ++ Seq(
@@ -202,6 +209,7 @@ object Dependencies {
     apacheCommons,
     guice,
     guiceMultibindings,
+    guiceAssistedInject,
     h2,
     slick,
     flyway,
@@ -212,7 +220,9 @@ object Dependencies {
     scalaz,
     log4jApi,
     log4jCore,
+
     log4jSlf4jImpl,
+    log4j12Api,
     slf4j,
     mimepull,
     parboiledScala
@@ -232,14 +242,24 @@ object Dependencies {
     sprayRouting,
     sparkLauncher,
     parboiledScala,
-    sprayHttpx
+    sprayHttpx,
+    log4jApi,
+    log4jCore,
+    log4jSlf4jImpl,
+    log4j12Api,
+    slf4j
   ) ++ Seq(akkaTestkit, mockitoCore, scalatest, scoverage, sprayTestkit, wiremock)
     .map(_ % s"$Test,it")
 
   val libraryservice = Seq(
     scalatra,
     jettyWebapp,
-    scalatraTest
+    scalatraTest,
+    log4jApi,
+    log4jCore,
+    log4jSlf4jImpl,
+    log4j12Api,
+    slf4j
   ) ++ Seq(scoverage).map(_ % s"$Test,it")
 
   val datasourcemanager = scalatraAndJetty ++ json4s ++ Seq(
@@ -262,6 +282,11 @@ object Dependencies {
   ) ++ Seq(scalatest).map(_ % Test)
 
   val integrationtests = Seq(
-    scalaz
+    scalaz,
+    log4jApi,
+    log4jCore,
+    log4jSlf4jImpl,
+    log4j12Api,
+    slf4j
   ) ++ Seq(scalatest).map(_ % s"$Test,it")
 }

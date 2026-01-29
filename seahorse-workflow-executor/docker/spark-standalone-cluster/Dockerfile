@@ -8,8 +8,8 @@ ARG HADOOP_VERSION
 RUN apt-get -y update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --force-yes software-properties-common python-software-properties
 RUN apt-get install -y \
-  openjdk-8-jdk \
-  openjdk-8-jre \
+  openjdk-11-jdk \
+  openjdk-11-jre \
   wget \
   vim \
   tmux \
@@ -21,7 +21,7 @@ RUN apt-get install -y \
 # Install R packages
 # gfortran liblapack-dev liblapack3 libopenblas-base libopenblas-dev are needed for machine learning R libraries
 RUN apt-get update && \
-   apt-get install -y build-essential openjdk-8-jre wget curl bzip2 openssh-server openssh-client libsm6 \
+   apt-get install -y build-essential openjdk-11-jre wget curl bzip2 openssh-server openssh-client libsm6 \
    r-base && \
    apt-get install -y gfortran liblapack-dev liblapack3 libopenblas-base libopenblas-dev && \
    apt-get clean && \

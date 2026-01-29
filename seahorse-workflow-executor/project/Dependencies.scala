@@ -71,7 +71,10 @@ object Library {
   val hadoopAWS = hadoop("aws")
   val hadoopClient = hadoop("client")
   val hadoopCommon = hadoop("common")
-  val log4JExtras = "log4j" % "apache-log4j-extras" % "1.2.17"
+  val log4jApi = "org.apache.logging.log4j" % "log4j-api" % "2.17.2"
+  val log4jCore = "org.apache.logging.log4j" % "log4j-core" % "2.17.2"
+  val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.2"
+  val log4j12Api = "org.apache.logging.log4j" % "log4j-1.2-api" % "2.17.2"
   val guava = "com.google.guava" % "guava" % "19.0"
   val nscalaTime = "com.github.nscala-time" %% "nscala-time" % Version.nsscalaTime
   val mockitoCore = "org.mockito" % "mockito-core" % Version.mockito
@@ -81,7 +84,7 @@ object Library {
   val scalacheck = "org.scalacheck" %% "scalacheck" % Version.scalacheck
   val scalate = "org.scalatra.scalate" %% "scalate-core" % "1.9.0"
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.36"
-  val slf4jLog4j = "org.slf4j" % "slf4j-log4j12" % "1.7.12"
+
   val sprayCan = spray("can")
   val sprayClient = spray("client")
   val sprayHttpx = spray("httpx")
@@ -174,11 +177,13 @@ object Dependencies {
     apacheCommonsLang3,
     config,
     javaMail,
-    log4JExtras,
+    log4jApi,
+    log4jCore,
+    log4jSlf4jImpl,
+    log4j12Api,
     nscalaTime,
     scalate,
     slf4j,
-    slf4jLog4j,
     sprayCan,
     sprayHttpx,
     sprayJson,
@@ -220,7 +225,10 @@ object Dependencies {
     scopt,
     sprayClient,
     rabbitmq,
-    log4JExtras,  
+    log4jApi,
+    log4jCore,
+    log4jSlf4jImpl,
+    log4j12Api,
     guava,
     jacksonDatabind, // Add explicit Jackson dependency
     jacksonModuleScala, // Add explicit Jackson Scala module
