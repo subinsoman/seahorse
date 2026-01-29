@@ -104,6 +104,7 @@ class PythonExecutionCaretaker(
     }
   }
 
+/*
   private def runPyExecutor(
       gatewayPort: Int,
       pythonExecutorPath: String): Process = {
@@ -113,10 +114,30 @@ class PythonExecutionCaretaker(
     logger.info(s"Starting a new PyExecutor process: $command")
 
     val pyLogger = ProcessLogger(fout = logger.error, ferr = logger.error)
+    pyLogger = ProcessLogger(
+      fout = msg => logger.info(s"PyExecutor stdout: $msg"),
+      ferr = msg => logger.error(s"PyExecutor stderr: $msg")
+    )
     val processBuilder: ProcessBuilder =
       Process(command, None, pythonPathGenerator.env())
     processBuilder.run(pyLogger)
   }
+*/
+
+private def runPyExecutor(gatewayPort: Int, pythonExecutorPath: String): Process = {
+    logger.info(s"Initializing PyExecutor from: $pythonExecutorPath")
+    val command = s"$pythonBinary $pythonExecutorPath " +
+      s"--gateway-address ${hostAddress.getHostAddress}:$gatewayPort"
+    logger.info(s"Starting a new PyExecutor process: $command")
+
+    val pyLogger = ProcessLogger(
+      fout = msg => logger.info(s"PyExecutor stdout: $msg"),
+      ferr = msg => logger.error(s"PyExecutor stderr: $msg")
+    )
+    val processBuilder: ProcessBuilder =
+      Process(command, None, pythonPathGenerator.env())
+    processBuilder.run(pyLogger)
+}
 
   /**
    * This thread starts PyExecutor in a loop as long

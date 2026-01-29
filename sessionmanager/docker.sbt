@@ -1,4 +1,6 @@
 import com.typesafe.sbt.SbtGit
+import scala.sys.process._
+
 enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging)
 
 lazy val workflowExecutorProject = ProjectRef(file("./seahorse-workflow-executor"), "workflowexecutor")
@@ -8,10 +10,10 @@ weJar := (assembly in workflowExecutorProject).value
 
 lazy val pythonAndRDeps = taskKey[File]("Generates we_deps.zip file with python and R dependencies")
 pythonAndRDeps := {
-  Seq("sessionmanager/prepare-deps.sh", Version.spark).!!
+  Process(Seq("sessionmanager/prepare-deps.sh", Version.spark)).!!
   target.value / "we-deps.zip"
 }
-pythonAndRDeps := (pythonAndRDeps dependsOn weJar.toTask).value
+pythonAndRDeps := (pythonAndRDeps dependsOn weJar).value
 
 dockerBaseImage :=
   s"seahorse-spark:${SbtGit.GitKeys.gitHeadCommit.value.get}"
@@ -30,6 +32,19 @@ dockerfile in docker := {
     workDir("/opt/docker")
 
     runRaw("/opt/conda/bin/pip install pika==1.3.2")
+    runRaw("/opt/conda/bin/pip install py4j")
+    runRaw("/opt/conda/bin/pip install mlxtend==0.22.0")
+    runRaw("/opt/conda/bin/pip install scikit-learn")
+    runRaw("/opt/conda/bin/pip install reportlab==3.6.5")
+    /*runRaw(
+      """/opt/conda/bin/pip install --no-cache-dir \
+         pika==1.3.2 \
+         py4j \
+         mlxtend==0.22.0 \
+         scikit-learn \
+         reportlab==3.6.5"""
+    )*/
+
 
     // Add Tini - so the python zombies can be collected
     env("TINI_VERSION", tiniVersion)
@@ -38,6 +53,8 @@ dockerfile in docker := {
 
     copy(pythonAndRDeps.value, "we-deps.zip")
     copy(weJar.value, "we.jar")
+    //copy("/data/seahorse/mimepull-1.9.13.jar", "/opt/docker/app/lib/mimepull-1.9.13.jar")
+    //copy(new File("sessionmanager/extra-lib/mimepull-1.9.13.jar"),"/opt/docker/app/lib/mimepull-1.9.13.jar")
     copy(sessionManagerAppDir, "app")
 
     entryPoint("/bin/tini", "--")

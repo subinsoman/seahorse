@@ -24,9 +24,10 @@ build_workflowexecutor () {
     sbt -DsparkVersion=$SPARK_VERSION -Dsbt.log.noformat=true clean workflowexecutor/assembly
 }
 
-build_workflowexecutor "2.0.0"
-build_workflowexecutor "2.0.1"
-build_workflowexecutor "2.0.2"
-build_workflowexecutor "2.1.0"
-build_workflowexecutor "2.1.1"
-build_workflowexecutor "2.2.0"
+#build_workflowexecutor "2.0.0"
+#build_workflowexecutor "2.0.1"
+#build_workflowexecutor "2.0.2"
+#build_workflowexecutor "2.1.0"
+#build_workflowexecutor "2.1.1"
+#build_workflowexecutor "2.2.0"
+build_workflowexecutor "3.0.0"

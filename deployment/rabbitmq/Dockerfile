@@ -1,4 +1,8 @@
-FROM rabbitmq:3.11-management
+#FROM rabbitmq:3.6
+FROM rabbitmq:3.9
+#FROM rabbitmq:3-management
+#FROM rabbitmq:3.6.11
+#FROM rabbitmq:3.6.7-alpine
 
 COPY rabbitmq.conf /etc/rabbitmq/
 COPY enabled_plugins /etc/rabbitmq/

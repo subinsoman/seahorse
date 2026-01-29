@@ -6,13 +6,29 @@ ENV H2_VERSION 1.4.192
 # build-essential gcc ruby-dev rubygems libssl-dev packages are needed by cf-uaac
 # get moreutils for sponge
 
-RUN echo "deb [check-valid-until=no] http://cdn-fastly.deb.debian.org/debian jessie main" > /etc/apt/sources.list.d/jessie.list
-RUN echo "deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/jessie-backports.list
+#RUN echo "deb [check-valid-until=no] http://cdn-fastly.deb.debian.org/debian jessie main" > /etc/apt/sources.list.d/jessie.list
+#RUN echo "deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/jessie-backports.list
 # RUN sed -i '/deb http:\/\/deb.debian.org\/debian jessie-updates main/d' /etc/apt/sources.list
-RUN sed -i '/deb http:\/\/\(deb\|httpredir\).debian.org\/debian jessie.* main/d' /etc/apt/sources.list
+#RUN sed -i '/deb http:\/\/\(deb\|httpredir\).debian.org\/debian jessie.* main/d' /etc/apt/sources.list
 
-RUN apt-get -o Acquire::Check-Valid-Until=false update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y ruby ruby-dev rubygems mailutils build-essential openssl zip
+# --- use the real archive for everything ---
+RUN echo "deb http://archive.debian.org/debian/ jessie main" \
+      > /etc/apt/sources.list.d/jessie.list && \
+    echo "deb http://archive.debian.org/debian/ jessie-backports main" \
+      > /etc/apt/sources.list.d/jessie-backports.list
+
+# Remove any other jessie lines that might still be present
+RUN sed -i '/jessie.*main/d' /etc/apt/sources.list
+
+
+#RUN apt-get -o Acquire::Check-Valid-Until=false update && \
+#    DEBIAN_FRONTEND=noninteractive apt-get install -y ruby ruby-dev rubygems mailutils build-essential openssl zip
+
+RUN apt-get -o Acquire::Check-Valid-Until=false -o Debug::pkgAcquire=1 update && \
+    DEBIAN_FRONTEND=noninteractive \
+    apt-get -o Debug::pkgAcquire=1 \
+            -o Debug::pkgProblemResolver=1 \
+            -y install ruby ruby-dev rubygems mailutils build-essential openssl zip
 
 RUN gem install public_suffix -v '<3.0' && \
     gem install cf-uaac -v 4.0.0

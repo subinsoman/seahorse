@@ -38,10 +38,17 @@ object CommonTablesGenerators {
           Seq(
             List(Some(namePrefix + pair.param.name), Some(choice), Some(pair.param.description.getOrElse("None")))) ++
             paramMapToDescriptionLists(choice.extractParamMap(), namePrefix)
-        case seq: Seq[_] =>
+        /*case seq: Seq[_] =>
           seq.zipWithIndex.flatMap { case (p: Params, i) =>
             paramMapToDescriptionLists(p.extractParamMap(), s"${pair.param.name} #${i + 1} ")
-          }.toList
+          }.toList */
+case seq: Seq[_] =>
+  seq.zipWithIndex.collect {
+    case (p: Params, i) =>
+      paramMapToDescriptionLists(p.extractParamMap(), s"${pair.param.name} #${i + 1} ")
+  }.flatten.toList
+
+
         case value =>
           Seq(List(Some(namePrefix + pair.param.name), Some(value), Some(pair.param.description.getOrElse("None"))))
       }

@@ -26,7 +26,10 @@ import ai.deepsense.deeplang.{DOperation, DOperationCategories, TypeUtils}
 import org.reflections.Reflections
 import org.reflections.util.ConfigurationBuilder
 
-import scala.collection.JavaConversions._
+//import scala.collection.JavaConversions._
+//import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
+
 
 /**
   * Scanner for operations and operables. It scans given jars and additionally a jar containing this
@@ -72,7 +75,9 @@ class CatalogScanner(jarsUrls: Seq[URL]) extends CatalogRegistrant with  Logging
         configBuilder.addClassLoader(URLClassLoader.newInstance(jarsUrls.toArray, getClass.getClassLoader))
       }
 
-      new Reflections(configBuilder).getTypesAnnotatedWith(classOf[Register]).toSet
+      //new Reflections(configBuilder).getTypesAnnotatedWith(classOf[Register]).toSet
+      //new Reflections(configBuilder).getTypesAnnotatedWith(classOf[Register]).asScala.toSet
+      new Reflections(configBuilder).getTypesAnnotatedWith(classOf[Register]).asScala.toSet
     } else {
       Set()
     }

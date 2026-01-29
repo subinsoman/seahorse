@@ -26,7 +26,9 @@ import javax.mail.util.ByteArrayDataSource
 import scala.util.{Failure, Success, Try}
 
 import com.sun.mail.smtp.SMTPTransport
-import collection.JavaConversions._
+//import collection.JavaConversions._
+//import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 import ai.deepsense.commons.mail.templates.{Template, TemplateInstanceToLoad}
 import ai.deepsense.commons.utils.Logging
@@ -125,11 +127,18 @@ class EmailSender private (emailSenderConfig: EmailSenderConfig) extends Logging
     newMsg
   }
 
-  private def copyMessageHeaders(from: MimeMessage, to: MimeMessage): Unit = {
+/*  private def copyMessageHeaders(from: MimeMessage, to: MimeMessage): Unit = {
     for (line <- from.getAllHeaderLines) {
       to.addHeaderLine(line.asInstanceOf[String])
     }
+  } */
+
+private def copyMessageHeaders(from: MimeMessage, to: MimeMessage): Unit = {
+  from.getAllHeaderLines.asScala.foreach { line =>
+    to.addHeaderLine(line.toString)
   }
+}
+
 
   private def createAttachmentBodyPart(
       attachmentStream: InputStream,

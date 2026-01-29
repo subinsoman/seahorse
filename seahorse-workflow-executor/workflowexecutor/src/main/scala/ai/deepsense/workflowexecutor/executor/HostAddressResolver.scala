@@ -17,7 +17,7 @@
 package ai.deepsense.workflowexecutor.executor
 
 import java.net.{Inet6Address, InetAddress, NetworkInterface}
-
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 import ai.deepsense.commons.utils.Logging
@@ -25,21 +25,20 @@ import ai.deepsense.commons.utils.Logging
 object HostAddressResolver extends Logging {
 
   def findHostAddress(): InetAddress = {
-    import collection.JavaConversions._
     Try {
-      val interfaces = NetworkInterface.getNetworkInterfaces.toIterable
+      val interfaces = NetworkInterface.getNetworkInterfaces.asScala
       interfaces.flatMap { n =>
-        n.getInetAddresses.toIterable.filter {
-          address =>
-            !address.isInstanceOf[Inet6Address] &&
-            !address.isLoopbackAddress &&
-            !address.isSiteLocalAddress &&
-            !address.isLinkLocalAddress &&
-            !address.isAnyLocalAddress &&
-            !address.isMulticastAddress &&
-            !(address.getHostAddress == "255.255.255.255")
+        n.getInetAddresses.asScala.filter { address =>
+          !address.isInstanceOf[Inet6Address] &&
+          !address.isLoopbackAddress &&
+          !address.isSiteLocalAddress &&
+          !address.isLinkLocalAddress &&
+          !address.isAnyLocalAddress &&
+          !address.isMulticastAddress &&
+          address.getHostAddress != "255.255.255.255"
         }
       }
-    }.get.headOption.getOrElse(InetAddress.getByName("127.0.0.1"))
+    }.get.toSeq.headOption.getOrElse(InetAddress.getByName("127.0.0.1"))
   }
 }
+

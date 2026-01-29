@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import com.typesafe.sbt.pgp.PgpKeys
+//import com.github.sbt.pgp.PgpKeys
+
+//import com.typesafe.sbt.pgp.PgpKeys
 import sbt.Keys._
 import sbt._
 
@@ -55,6 +57,6 @@ object PublishSettings {
       </developers>))
 
   def disablePublishing = Seq(
-    PgpKeys.publishSigned := ()
+    //PgpKeys.publishSigned := ()
   )
 }

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import sbt.Tests.{SubProcess, Group}
+import sbt.Tests.{Group, SubProcess}
 import CommonSettingsPlugin._
-
 
 // scalastyle:off
 
 name := "seahorse-executor-deeplang"
 
 // Integration tests using Spark Clusters need jar
-(test in OurIT) := ((test in OurIT).dependsOn (assembly)).value
+test in Test := (test in Test).dependsOn(assembly).value
 
 // Only one spark context per JVM
 def assignTestsToJVMs(testDefs: Seq[TestDefinition]) = {
@@ -33,20 +32,31 @@ def assignTestsToJVMs(testDefs: Seq[TestDefinition]) = {
     Group(
       name = "tests_for_jvm_1",
       tests = forJvm1,
-      runPolicy = SubProcess(ForkOptions(runJVMOptions = Seq.empty))
+      runPolicy = SubProcess(
+        sbt.ForkOptions()
+          .withRunJVMOptions(Vector.empty[String])
+      )
     ),
     Group(
       name = "test_for_jvm_2",
       tests = forJvm2,
-      runPolicy = SubProcess(ForkOptions(runJVMOptions = Seq.empty))
+      runPolicy = SubProcess(
+        sbt.ForkOptions()
+          .withRunJVMOptions(Vector.empty[String])
+      )
     )
   )
 }
 
-testGrouping in OurIT := {
-  val testDefinitions = (definedTests in OurIT).value
+testGrouping in Test := {
+  val testDefinitions = (definedTests in Test).value
   assignTestsToJVMs(testDefinitions)
 }
+
+//scalacOptions --= Seq("-Xfatal-warnings")
+ThisBuild / scalacOptions --= Seq("-Xfatal-warnings")
+
+Compile / doc / sources := Seq()
 
 libraryDependencies ++= Dependencies.deeplang
 

@@ -18,24 +18,25 @@ resolvers += Classpaths.sbtPluginReleases
 
 resolvers += "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases/"
 
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.4")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.3.1")
 
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
+addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
 
-addSbtPlugin("io.spray" % "sbt-revolver" % "0.7.2")
+addSbtPlugin("io.spray" % "sbt-revolver" % "0.10.0")
 
 // Assembly plugin allows creation a fat JAR of project with all of its dependencies.
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.13.0")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "1.0.0")
 
 // Plugin provides build info to use in code
-addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.4.0")
+addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.13.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-license-report" % "1.2.0")
 
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.0")
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.12.2")
 
-addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.5.1")
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 
-logLevel := Level.Warn
+libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+

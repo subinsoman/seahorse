@@ -25,8 +25,9 @@ import ai.deepsense.api.datasourcemanager.model.Datasource
 import ai.deepsense.commons.rest.client.datasources.DatasourceTypes.DatasourceList
 import org.joda
 
-import scala.collection.JavaConversions._
+//import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+
 
 object DatasourceListJsonProtocol {
   private val t = new TypeToken[java.util.LinkedList[Datasource]](){}.getType
@@ -41,11 +42,13 @@ object DatasourceListJsonProtocol {
 
   def fromString(json: String): DatasourceList = {
     val ds: java.util.List[Datasource] = gson.fromJson(json, t)
-    ds.toList
+    //ds.toList
+    ds.asScala.toList
   }
 
   def toString(datasources: DatasourceList): String = {
-    gson.toJson(datasources.asJava)
+    //gson.toJson(datasources.asJava)
+     gson.toJson(datasources.asJava)
   }
 }
 

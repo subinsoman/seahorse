@@ -16,12 +16,13 @@
 
 package ai.deepsense.deeplang.doperables
 
-
+import org.apache.spark.sql.{DataFrame => SparkDataFrame}
 import ai.deepsense.deeplang.ExecutionContext
 import ai.deepsense.deeplang.OperationExecutionDispatcher.Result
 import ai.deepsense.deeplang.doperables.dataframe.DataFrame
 import ai.deepsense.deeplang.doperations.exceptions.CustomOperationExecutionException
 import ai.deepsense.deeplang.params.CodeSnippetParam
+import ai.deepsense.commons.utils.Logging
 
 abstract class CustomCodeTransformer extends Transformer {
   val InputPortNumber: Int = 0
@@ -45,18 +46,32 @@ abstract class CustomCodeTransformer extends Transformer {
     }
 
     ctx.dataFrameStorage.withInputDataFrame(InputPortNumber, df.sparkDataFrame) {
+      logger.info("--->   :: In info log")
+      logger.debug("--->   :: In debug log")
       runCode(ctx, code) match {
         case Left(error) =>
           throw CustomOperationExecutionException(s"Execution exception:\n\n$error")
 
         case Right(_) =>
-          val sparkDataFrame =
-            ctx.dataFrameStorage.getOutputDataFrame(OutputPortNumber).getOrElse {
+          // Log details about the output DataFrame
+          val outputDataFrameOption = ctx.dataFrameStorage.getOutputDataFrame(OutputPortNumber)
+          logger.info(s"Output DataFrame option: $outputDataFrameOption")
+          
+          outputDataFrameOption match {
+            case Some(sparkDataFrame) =>
+              logger.info(s"Output DataFrame type: ${sparkDataFrame.getClass.getName}")
+              logger.info(s"Output DataFrame schema: ${sparkDataFrame.schema}")
+              val rowCount = sparkDataFrame.count()
+              logger.info(s"Output DataFrame row count: $rowCount")
+              if (rowCount == 0) {
+                logger.warn("Output DataFrame is empty (0 rows)")
+              }
+              DataFrame.fromSparkDataFrame(sparkDataFrame)
+            case None =>
+              logger.error("No output DataFrame found in dataFrameStorage for OutputPortNumber: " + OutputPortNumber)
               throw CustomOperationExecutionException(
                 "Operation finished successfully, but did not produce a DataFrame.")
-            }
-
-          DataFrame.fromSparkDataFrame(sparkDataFrame)
+          }
       }
     }
   }

@@ -20,6 +20,28 @@ name := "seahorse-executor-commons"
 libraryDependencies ++= Dependencies.commons
 resolvers ++= Dependencies.resolvers
 
+
+libraryDependencies ++= Seq(
+  "io.spray" %% "spray-http" % "1.3.3",
+  "io.spray" %% "spray-httpx" % "1.3.3",
+  "io.spray" %% "spray-util" % "1.3.3",
+  "io.spray" %% "spray-io" % "1.3.3"
+)
+
+/*dependencyOverrides ++= Set(
+  "io.spray" %% "spray-http" % "1.3.3",
+  "io.spray" %% "spray-httpx" % "1.3.3",
+  "io.spray" %% "spray-util" % "1.3.3"
+)*/
+
+excludeDependencies ++= Seq(
+  ExclusionRule("io.spray", "spray-http_2.11"),
+  ExclusionRule("io.spray", "spray-httpx_2.11"),
+  ExclusionRule("io.spray", "spray-util_2.11"),
+  ExclusionRule("org.scala-lang.modules", "scala-xml_2.11")
+)
+
+
 Revolver.settings
 
 inConfig(Test) {

@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ai.deepsense.deeplang.catalogs.spi
 
 import java.util.ServiceLoader
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
-/**
-  * SPI interface for clients wishing to add categories, operations, and operables to the catalog
-  * of user-available workflow nodes.
-  */
 trait CatalogRegistrant {
   def register(registrar: CatalogRegistrar): Unit
 }
 
 object CatalogRegistrant {
-  /** Create the a catalog of workflow nodes. */
   private[deeplang] def load(registrar: CatalogRegistrar, loader: ClassLoader): Unit = {
-    val registrants = ServiceLoader.load(classOf[CatalogRegistrant], loader).toSeq
-    for(r <- registrants) {
+    val registrants = ServiceLoader.load(classOf[CatalogRegistrant], loader).iterator().asScala.toSeq
+    for (r <- registrants) {
       r.register(registrar)
     }
   }
 }
+

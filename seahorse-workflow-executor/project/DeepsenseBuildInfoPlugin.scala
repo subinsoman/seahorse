@@ -20,6 +20,7 @@ import sbt.Keys._
 import sbt._
 import sbtbuildinfo.BuildInfoKey.Entry
 import sbtbuildinfo.{BuildInfoKey, BuildInfoPlugin}
+import sys.process._
 
 object DeepsenseBuildInfoPlugin extends AutoPlugin {
   override def requires: Plugins = BuildInfoPlugin
@@ -50,7 +51,8 @@ object DeepsenseBuildInfoPlugin extends AutoPlugin {
 
     Seq(
       BuildInfoKey.action("gitCommitId") {
-        Process("git rev-parse HEAD").lines.head
+        //Process("git rev-parse HEAD").lines.head
+        Process("git rev-parse HEAD").!!.trim
       },
 
       "apiVersionMajor" -> maj,

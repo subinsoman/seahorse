@@ -31,9 +31,12 @@ simple_command_type = 'simple_command'
 sbt_type = 'sbt'
 
 
-spark_version = "2.1.1"
-hadoop_version = "2.7"
+#spark_version = "2.1.1"
+#hadoop_version = "2.7"
 
+
+spark_version = "3.0.0"
+hadoop_version = "2.7"
 
 # This is added here since sbt clean doesn't clean everything; in particular, it doesn't clean
 # project/target, so we delete all "target". For discussion, see
@@ -76,11 +79,11 @@ image_confs = [
     #simple_docker("seahorse-proxy", "proxy"),
     #simple_docker("seahorse-rabbitmq", "deployment/rabbitmq"),
     #simple_docker("seahorse-h2", "deployment/h2-docker"),
-    simple_docker_with_spark_version("seahorse-spark", "deployment/spark-docker"),
+    #simple_docker_with_spark_version("seahorse-spark", "deployment/spark-docker"),
     #simple_command_docker("seahorse-mesos-spark", "./build/build_spark_docker_mesos.sh"),
     #sbt_docker("seahorse-schedulingmanager", "schedulingmanager"),
     #sbt_docker('seahorse-sessionmanager', "sessionmanager"),
-    #sbt_docker("seahorse-workflowmanager", "workflowmanager"),
+    sbt_docker("seahorse-workflowmanager", "workflowmanager"),
     #sbt_docker("seahorse-datasourcemanager", "datasourcemanager"),
     #sbt_docker("seahorse-libraryservice", "libraryservice"),
     #simple_docker("seahorse-notebooks", "remote_notebook"),

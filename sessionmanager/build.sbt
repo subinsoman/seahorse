@@ -4,12 +4,18 @@
 
 import com.typesafe.sbt.SbtGit
 import com.typesafe.sbt.packager.docker._
+
+//import com.github.sbt.SbtGit
+//import com.github.sbt.packager.docker._
+
 import sbt.ProjectRef
 
 name := "seahorse-sessionmanager"
 
 libraryDependencies ++= Dependencies.sessionmanager
 resolvers ++= Dependencies.resolvers
+
+libraryDependencies += "org.jvnet" % "mimepull" % "1.6"
 
 Revolver.settings
 

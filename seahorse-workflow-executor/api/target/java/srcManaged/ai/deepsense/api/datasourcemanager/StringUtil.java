@@ -25,7 +25,7 @@
 
 package ai.deepsense.api.datasourcemanager;
 
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaClientCodegen", date = "2025-06-19T13:42:51.328+05:30")
+@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaClientCodegen", date = "2026-01-29T15:23:52.060+05:30")
 public class StringUtil {
   /**
    * Check if the given array contains the given value (with case-insensitive comparison).

@@ -58,7 +58,7 @@ class VanillaGBTClassificationModel()
 
     super.report(extended)
       .withReportName(
-        s"${this.getClass.getSimpleName} with ${sparkModel.numTrees} trees")
+        s"${this.getClass.getSimpleName} with ${sparkModel.getNumTrees} trees")
       .withAdditionalTable(CommonTablesGenerators.modelSummary(summary))
       .withAdditionalTable(
         CommonTablesGenerators.decisionTree(

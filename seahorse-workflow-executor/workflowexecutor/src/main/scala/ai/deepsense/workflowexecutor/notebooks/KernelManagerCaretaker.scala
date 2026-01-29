@@ -62,6 +62,9 @@ class KernelManagerCaretaker(
     }
 
     val extractedKernelManagerPath = s"$kernelManagerPath/$startupScript"
+    logger.info(s"---------------------> startupScript = $startupScript")
+    logger.info(s"---------------------> kernelManagerPath = $kernelManagerPath")
+    logger.info(s"---------------------> extractedKernelManagerPath = $extractedKernelManagerPath")
     val process = runKernelManager(extractedKernelManagerPath, kernelManagerPath)
     val exited = Future(process.exitValue()).map { code =>
       startPromise.failure(
@@ -96,6 +99,10 @@ class KernelManagerCaretaker(
   }
 
   private def runKernelManager(kernelManagerPath: String, workingDir: String): Process = {
+    
+    logger.info(s"---------------------> kernelManagerPath = $kernelManagerPath")
+    logger.info(s"---------------------> workingDir = $workingDir")
+
     val pyLogger = ProcessLogger(fout = logger.info, ferr = logger.error)
 
     val chmod = s"chmod +x $kernelManagerPath"

@@ -41,7 +41,7 @@ case class MultiColumnStringIndexerModel()
     val tables = models.map(model => model.report(extended).content.tables)
     val name = s"${this.getClass.getSimpleName} with ${models.length} columns"
     tables
-      .foldRight (super.report(extended).withReportName(name))(
+      .foldRight(super.report(extended).withReportName(name))(
         (seqTables, accReport) =>
           seqTables.foldRight(accReport)((t, r) => r.withAdditionalTable(t)))
   }
@@ -116,7 +116,7 @@ class SingleColumnStringIndexerModel
       List(
         SparkSummaryEntry(
           name = "labels",
-          value = sparkModel.labels,
+          value = sparkModel.labelsArray(0),
           description = "Ordered list of labels, corresponding to indices to be assigned."))
 
     super.report(extended)
@@ -129,4 +129,3 @@ class SingleColumnStringIndexerModel
     new SerializableSparkModel(SparkStringIndexerModel.load(path))
   }
 }
-

@@ -26,7 +26,8 @@ import java.lang.annotation.Target;
  *
  * @see ai.deepsense.deeplang.DOperation DOperation
  */
-@Retention(RetentionPolicy.CLASS)
+//@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE })
 public @interface Register {
 

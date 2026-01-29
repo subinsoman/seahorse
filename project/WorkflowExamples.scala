@@ -15,6 +15,7 @@
  */
 
 import scala.language.postfixOps
+import scala.sys.process._
 
 import sbt.Keys._
 import sbt._
@@ -30,10 +31,14 @@ object WorkflowExamples {
     val scriptFile = "generate_workflow_examples_sql.py"
     val outFileDir = outFile.getParentFile
     outFileDir.mkdirs()
-
+/*
     val exitCode = Seq("/bin/bash", "-c",
       s"cd '${scriptDir.getCanonicalPath}'; " +
         s"python '$scriptFile' > '${outFile.getCanonicalPath}'") !
+*/
+    val exitCode = Seq("/bin/bash", "-c",
+      s"cd '${scriptDir.getCanonicalPath}'; " +
+        s"python2 '$scriptFile' > '${outFile.getCanonicalPath}'") !
 
     if (exitCode != 0) {
       throw new RuntimeException(s"Unable to generate workflow examples sql file, script exited with code: $exitCode")

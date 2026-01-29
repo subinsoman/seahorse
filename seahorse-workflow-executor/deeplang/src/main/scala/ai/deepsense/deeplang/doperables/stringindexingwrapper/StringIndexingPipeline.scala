@@ -53,7 +53,7 @@ private [stringindexingwrapper] object StringIndexingPipeline {
     val labelConverter = new IndexToString()
       .setInputCol(predictionColumnName)
       .setOutputCol(predictedLabelsColumnName)
-      .setLabels(stringIndexer.labels)
+      .setLabels(stringIndexer.labelsArray(0))
 
     val tempLabelsColumnName = UUID.randomUUID().toString
     val predictionColumnType = sparkDataFrame.schema(labelColumnName).dataType

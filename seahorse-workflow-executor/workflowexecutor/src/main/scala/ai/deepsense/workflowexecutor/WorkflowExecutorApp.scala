@@ -18,7 +18,7 @@ package ai.deepsense.workflowexecutor
 
 import java.net.URL
 
-import org.apache.log4j.xml.DOMConfigurator
+
 import scopt.OptionParser
 
 import ai.deepsense.commons.utils.Logging
@@ -258,7 +258,6 @@ object WorkflowExecutorApp extends Logging {
   def configureLogging(): Unit = {
     Option(System.getProperty("logFile"))
       .getOrElse(System.setProperty("logFile", "workflowexecutor"))
-    DOMConfigurator.configure(getClass.getResource("/log4j.xml"))
   }
 
 

@@ -160,7 +160,7 @@ object MQCommunicationFactory {
    *
    * Thus, it is possible that the handler responds ChannelCreated before the channel is Created.
    */
-  class NotifyingChannelActor[T <: AnyRef](
+/*  class NotifyingChannelActor[T <: AnyRef](
       channelConnected: Promise[ChannelSetupResult[T]],
       setupChannel: (Channel, ActorRef) => T) extends {
     private val setupPromise = Promise[ChannelSetupResult[T]]()
@@ -177,6 +177,67 @@ object MQCommunicationFactory {
     }
 
   }
+*/
+/*
+class NotifyingChannelActor[T <: AnyRef](
+    channelConnected: Promise[ChannelSetupResult[T]],
+    setupChannel: (Channel, ActorRef) => T
+) extends ChannelActor({
+  case (channel, channelActor) =>
+    // Access setupPromise after construction
+    setupPromise.trySuccess(ChannelSetupResult(setupChannel(channel, channelActor), channelActor))
+}) {
+  // Define fields in class body (post-superclass initialization)
+  private val setupPromise = Promise[ChannelSetupResult[T]]()
+  private val setupResults: Future[ChannelSetupResult[T]] = setupPromise.future
+
+  onTransition {
+    case Disconnected -> Connected => 
+      channelConnected.tryCompleteWith(setupResults)
+  }
+}
+*/
+
+/*
+class NotifyingChannelActor[T <: AnyRef](
+    channelConnected: Promise[ChannelSetupResult[T]],
+    setupChannel: (Channel, ActorRef) => T
+) extends {
+  // Define fields in early initializer (before superclass constructor)
+  private val setupPromise = Promise[ChannelSetupResult[T]]()
+  private val setupResults: Future[ChannelSetupResult[T]] = setupPromise.future
+} with ChannelActor({
+  case (channel, channelActor) => 
+    setupPromise.trySuccess(ChannelSetupResult(setupChannel(channel, channelActor), channelActor))
+}) {
+  onTransition {
+    case Disconnected -> Connected => 
+      channelConnected.tryCompleteWith(setupResults)
+  }
+}
+*/
+
+/*
+class NotifyingChannelActor[T <: AnyRef](
+    channelConnected: Promise[ChannelSetupResult[T]],
+    setupChannel: (Channel, ActorRef) => T
+) extends ChannelActor({
+  case (channel, channelActor) =>
+    // Use the lazy val defined below
+    setupPromise.trySuccess(ChannelSetupResult(setupChannel(channel, channelActor), channelActor))
+}) {
+  // Use lazy val to guarantee initialization order
+  private lazy val setupPromise = Promise[ChannelSetupResult[T]]()
+  private lazy val setupResults: Future[ChannelSetupResult[T]] = setupPromise.future
+
+  onTransition {
+    case Disconnected -> Connected =>
+      channelConnected.tryCompleteWith(setupResults)
+  }
+}
+
+
+
 
   object NotifyingChannelActor {
     def props[T](
@@ -184,5 +245,38 @@ object MQCommunicationFactory {
         setupChannel: (Channel, ActorRef) => T): Props = {
       Props(classOf[NotifyingChannelActor[T]], channelConnected, setupChannel)
     }
+  }*/
+
+
+
+class NotifyingChannelActor[T <: AnyRef](
+    channelConnected: Promise[ChannelSetupResult[T]],
+    setupPromise: Promise[ChannelSetupResult[T]], // Pass this in!
+    setupChannel: (Channel, ActorRef) => T
+) extends ChannelActor({
+  case (channel, channelActor) =>
+    setupPromise.trySuccess(ChannelSetupResult(setupChannel(channel, channelActor), channelActor))
+}) {
+  private val setupResults: Future[ChannelSetupResult[T]] = setupPromise.future
+
+  onTransition {
+    case Disconnected -> Connected =>
+      channelConnected.tryCompleteWith(setupResults)
   }
+}
+
+
+
+object NotifyingChannelActor {
+  def props[T](
+      channelConnected: Promise[ChannelSetupResult[T]],
+      setupChannel: (Channel, ActorRef) => T
+  ): Props = {
+    val setupPromise = Promise[ChannelSetupResult[T]]()
+    Props(classOf[NotifyingChannelActor[T]], channelConnected, setupPromise, setupChannel)
+  }
+}
+
+
+
 }

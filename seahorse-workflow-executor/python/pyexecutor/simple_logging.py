@@ -25,3 +25,7 @@ def log_debug(s):
 def log_error(s):
     with open('/opt/docker/pyexecutor.log', 'a+') as f:
         print('[PyExecutor] {}\n'.format(s), file=f)
+
+def log_info(s):
+    with open('/opt/docker/pyexecutor.log', 'a+') as f:
+        print('[PyExecutor] {}\n'.format(s), file=f)

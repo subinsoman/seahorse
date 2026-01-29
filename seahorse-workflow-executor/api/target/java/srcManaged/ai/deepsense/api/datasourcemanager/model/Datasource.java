@@ -37,7 +37,7 @@ import org.joda.time.DateTime;
 /**
  * Datasource
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaClientCodegen", date = "2025-06-19T13:42:51.328+05:30")
+@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaClientCodegen", date = "2026-01-29T15:23:52.060+05:30")
 public class Datasource   {
   @SerializedName("id")
   private String id = null;

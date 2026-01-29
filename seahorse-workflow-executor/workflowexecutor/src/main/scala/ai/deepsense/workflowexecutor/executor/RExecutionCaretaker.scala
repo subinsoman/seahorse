@@ -15,8 +15,7 @@
  */
 
 package ai.deepsense.workflowexecutor.executor
-
-import org.apache.spark.api.r.SparkRBackend
+// import org.apache.spark.api.r.SparkRBackend
 
 import ai.deepsense.commons.utils.Logging
 import ai.deepsense.deeplang.CustomCodeExecutor
@@ -26,14 +25,22 @@ import ai.deepsense.workflowexecutor.customcode.CustomCodeEntryPoint
 class RExecutionCaretaker(rExecutorPath: String,
                           customCodeEntryPoint: CustomCodeEntryPoint) extends Logging {
 
-  private val backend = new SparkRBackend()
+  // Placeholder values to mimic SparkRBackend
+  private val fakePort: Int = 12345
+  private val fakeEntryPointId: String = "dummy-entry-point"
 
-  def backendListeningPort: Int = backend.port
+  def backendListeningPort: Int = fakePort
 
   def rCodeExecutor: CustomCodeExecutor = new RExecutor(
-    backend.port, backend.entryPointId, customCodeEntryPoint, extractRExecutor())
+    fakePort,
+    fakeEntryPointId,
+    customCodeEntryPoint,
+    extractRExecutor()
+  )
 
-  def start(): Unit = backend.start(customCodeEntryPoint)
+  def start(): Unit = {
+    logger.warn("RExecutionCaretaker.start() called, but SparkRBackend is disabled. This is a no-op.")
+  }
 
   private def extractRExecutor(): String = {
     if (rExecutorPath.endsWith(".jar")) {
@@ -44,3 +51,4 @@ class RExecutionCaretaker(rExecutorPath: String,
     }
   }
 }
+

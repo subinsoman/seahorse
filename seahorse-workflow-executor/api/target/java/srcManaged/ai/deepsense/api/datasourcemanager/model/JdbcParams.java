@@ -35,7 +35,7 @@ import io.swagger.annotations.ApiModelProperty;
  * Defined for JDBC datasource type. Either query or table must be defined.
  */
 @ApiModel(description = "Defined for JDBC datasource type. Either query or table must be defined.")
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaClientCodegen", date = "2025-06-19T13:42:51.328+05:30")
+@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaClientCodegen", date = "2026-01-29T15:23:52.060+05:30")
 public class JdbcParams   {
   @SerializedName("url")
   private String url = null;

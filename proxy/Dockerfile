@@ -1,23 +1,32 @@
-# Copyright (c) 2016, CodiLime Inc.
-FROM  node:6.11-slim
+# ────────────────────────────────────────────────────
+# Legacy build on Node 6 (Alpine)
+# ────────────────────────────────────────────────────
+FROM node:6.11-alpine
 
-RUN npm install webpack -g
-RUN npm install webpack-node-externals --save-dev -g
+# 1) Install Git via Alpine’s apk (no update step needed)
+RUN apk add --no-cache git
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends --no-install-suggests -y git && \
-    rm -rf /var/lib/apt/lists/*
+# 2) Clean npm’s cache and remove any broken staging folder
+RUN npm cache clean --force \
+ && rm -rf /usr/local/lib/node_modules/.staging
 
-RUN mkdir -p /opt/docker
+# 3) Globally install the last Webpack + externals versions that support Node 6
+RUN npm install -g webpack@3.12.0 webpack-node-externals@1.7.2
+
+# 4) Set working directory
 WORKDIR /opt/docker
 
-COPY package.json .
-RUN npm config set registry http://registry.npmjs.org/ && npm install
+# 5) Copy only your manifest files and install all dependencies
+#    (using a wildcard so it works with or without a lockfile)
+COPY package*.json ./
+RUN npm config set registry=http://registry.npmjs.org/ \
+ && npm install
 
+# 6) Copy the rest of your source, build, then optionally clean up
 COPY . .
-# TODO Building should occur before ever adding js files as docker layer (or we should squash some layers)
-# Otherwise someone might access source code
-RUN npm run build && \
-    rm -rf app
+RUN npm run build \
+ && rm -rf app
 
+# 7) Default command
 CMD ["npm", "start"]
+

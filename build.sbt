@@ -19,7 +19,9 @@ lazy val seahorseWorkflowExecutor = ProjectRef(shWeRepoDir, "workflowexecutor")
 
 lazy val backendcommons         = project dependsOn seahorseCommons
 lazy val workflowmanager        = project dependsOn (seahorseDeeplang, seahorseGraph, seahorseReportlib,
-  seahorseWorkflowJson, backendcommons, backendcommons % "test->test", seahorseApi)
+  seahorseWorkflowJson, backendcommons, backendcommons % "test->test", seahorseApi) settings (
+  dependencyOverrides += "com.google.guava" % "guava" % "19.0"
+)
 lazy val sessionmanager         = project dependsOn (seahorseMqProtocol, backendcommons, backendcommons % "test->test",
   seahorseWorkflowJson, seahorseApi)
 lazy val libraryservice         = project dependsOn (backendcommons, backendcommons % "test->test")
@@ -88,5 +90,22 @@ lazy val scalastyleCmd = projectsForScalastyle.flatMap(p => Seq(
     s"${p.id}/test:scalastyle"
 )).mkString(";", " ;", "")
 addCommandAlias("scalastylebackend", scalastyleCmd) // override default scalastyle task
+
+//dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
+
+
+evictionErrorLevel := Level.Warn
+libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
+
+
+libraryDependencies ++= Seq(
+  "org.scoverage" %% "scalac-scoverage-reporter" % "2.3.0" exclude("org.scala-lang.modules", "scala-xml_2.12"),
+  "org.scalariform" %% "scalariform" % "0.2.0",
+  "org.scala-lang.modules" %% "scala-xml" % "2.3.0" // or 1.0.6
+)
+
+ThisBuild / scalacOptions --= Seq("-Xfatal-warnings")
+
+
 
 // scalastyle:on

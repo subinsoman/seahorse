@@ -21,7 +21,7 @@ lazy val settingsForNotPublished = CommonSettingsPlugin.assemblySettings ++
   LicenceReportSettings.settings ++ PublishSettings.disablePublishing
 
 lazy val sparkVersion = Version.spark
-
+//println(s"SPARK_VERSION $sparkVersion")
 
 
 lazy val sparkUtils = sparkVersion match {
@@ -31,23 +31,38 @@ lazy val sparkUtils = sparkVersion match {
   case "2.1.0" | "2.1.1" =>
     val sparkUtils2_1_0 = project in file("sparkutils2.1.x") settings settingsForPublished
     sparkUtils2_1_0
-  case "2.2.0" =>
+  case "2.2.0"  =>
     val sparkUtils2_1_0 = project in file("sparkutils2.2.x") settings settingsForPublished
     sparkUtils2_1_0
+  case "2.4.8" =>
+    val sparkUtils2_4_8 = project in file("sparkutils2.4.x") settings settingsForPublished
+    sparkUtils2_4_8
+  case "3.0.0" =>
+    val sparkUtils3_0_0 = project in file("sparkutils3.0.x") settings settingsForPublished
+    sparkUtils3_0_0 
 }
 
-lazy val sparkUtils2_x = project in file(s"sparkutils2.x") dependsOn (csvlib, sparkUtils) settings settingsForPublished
+//lazy val sparkUtils2_x = project in file(s"sparkutils2.x") dependsOn (csvlib, sparkUtils) settings settingsForPublished
 
+lazy val sparkUtils2_x = project in file(s"sparkutils_test") dependsOn (csvlib, sparkUtils) settings settingsForPublished
+
+
+lazy val csv3_0 = project in file(s"sparkutilsfeatures/csv3_0") settings settingsForPublished
+lazy val csv2_4 = project in file(s"sparkutilsfeatures/csv2_4") settings settingsForPublished
 lazy val csv2_2 = project in file(s"sparkutilsfeatures/csv2_2") settings settingsForPublished
 lazy val csv2_0 = project in file(s"sparkutilsfeatures/csv2_0") dependsOn sparkUtils settings settingsForPublished
 
 lazy val csvlib = sparkVersion match {
   case "2.0.0" | "2.0.1" | "2.0.2" =>
     csv2_0
-  case "2.1.0" | "2.1.1" =>
+  case "2.1.0" | "2.1.1"  =>
     csv2_0
-  case "2.2.0" =>
+  case "2.2.0"  =>
     csv2_2
+  case "2.4.8" =>
+    csv2_4
+  case "3.0.0" =>
+    csv3_0
 }
 
 lazy val readjsondataset = project in file(s"sparkutilsfeatures/readjsondataset") dependsOn sparkUtils2_x settings settingsForPublished
@@ -55,8 +70,10 @@ lazy val readjsondataframe = project in file(s"sparkutilsfeatures/readjsondatafr
 
 lazy val readjson = sparkVersion match {
   case "2.0.0" | "2.0.1" | "2.0.2" => readjsondataframe
-  case "2.1.0" | "2.1.1" => readjsondataframe
+  case "2.1.0" | "2.1.1"  => readjsondataframe
   case "2.2.0" => readjsondataset
+  case "2.4.8" => readjsondataset
+  case "3.0.0" => readjsondataset
 }
 
 lazy val rootProject = project
@@ -128,5 +145,27 @@ addCommandAlias(
 addCommandAlias(
   "generateExamples",
   "deeplang/it:testOnly ai.deepsense.deeplang.doperations.examples.*")
+
+//dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
+//ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+//libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % "early-semver"
+//libraryDependencies += "org.scalariform" %% "scalariform" % "0.2.10
+
+//ThisBuild / versionScheme := Some("early-semver")
+
+evictionErrorLevel := Level.Warn
+libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
+
+libraryDependencies ++= Seq(
+  "org.scoverage" %% "scalac-scoverage-reporter" % "2.3.0" exclude("org.scala-lang.modules", "scala-xml_2.12"),
+  "org.scalariform" %% "scalariform" % "0.2.0",
+  "org.scala-lang.modules" %% "scala-xml" % "2.3.0" // or 1.0.6
+)
+
+libraryDependencies ++= Dependencies.api ++ Seq(
+  "io.swagger" % "swagger-codegen" % "2.4.21",
+  "io.swagger" % "swagger-parser"  % "1.0.56"
+)
+
 
 // scalastyle:on

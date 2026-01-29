@@ -61,13 +61,27 @@ abstract class Notebook()
       } {
         logger.info(s"Generating notebook data")
 
-        streamFut.onFailure {
+       /* streamFut.onFailure {
           case t =>
             val stackWriter = new StringWriter()
             t.printStackTrace(new PrintWriter(stackWriter))
             sendMail("Notebook execution failed", "Sorry! The execution of your notebook has failed.\n" +
               stackWriter.toString, context, None)
-        }
+        }*/
+        
+streamFut.failed.foreach { t =>
+  val stackWriter = new StringWriter()
+  t.printStackTrace(new PrintWriter(stackWriter))
+  sendMail(
+    "Notebook execution failed",
+    "Sorry! The execution of your notebook has failed.\n" + stackWriter.toString,
+    context,
+    None
+  )
+}
+
+
+
 
         Await.result(for {
           stream <- streamFut

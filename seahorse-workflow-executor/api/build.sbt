@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-import io.swagger.codegen.{ClientOptInput, ClientOpts, CodegenConstants, DefaultGenerator}
-import io.swagger.codegen.languages.JavaClientCodegen
+
+import _root_.io.swagger.codegen.{ClientOptInput, ClientOpts, CodegenConstants, DefaultGenerator}
+
+//import io.swagger.codegen.{ClientOptInput, ClientOpts, CodegenConstants, DefaultGenerator}
+import _root_.io.swagger.codegen.languages.JavaClientCodegen
 
 import scala.util.Random
 import collection.JavaConverters._
-import io.swagger.parser.SwaggerParser
+import _root_.io.swagger.parser.SwaggerParser
 
 name := "seahorse-executor-api"
 description := "API used between subcomponents of Seahorse"
@@ -74,5 +77,10 @@ buildSwaggerClients in Compile := {
     relevantFiles
   }
 }
+
+libraryDependencies ++= Dependencies.api ++ Seq(
+  "io.swagger" % "swagger-codegen" % "2.4.21",
+  "io.swagger" % "swagger-parser"  % "1.0.56"
+)
 
 libraryDependencies ++= Dependencies.api

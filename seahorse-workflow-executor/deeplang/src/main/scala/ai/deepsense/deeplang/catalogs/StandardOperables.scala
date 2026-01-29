@@ -25,6 +25,8 @@ import ai.deepsense.deeplang.doperables.spark.wrappers.evaluators._
 import ai.deepsense.deeplang.doperables.spark.wrappers.models._
 import ai.deepsense.deeplang.doperables.spark.wrappers.transformers._
 
+//import ai.deepsense.deeplang.doperables.spark.wrappers.transformers.OneHotEncoder
+
 /**
   * Class responsible for registering the default built-in set of Seahorse operations.
   */

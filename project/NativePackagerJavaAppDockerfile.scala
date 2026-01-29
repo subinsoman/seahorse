@@ -20,7 +20,8 @@ object NativePackagerJavaAppDockerfile {
   import sbtdocker._
 
   def apply(appDir: File, executableScriptName: String): Dockerfile = new Dockerfile()
-    .from("anapsix/alpine-java:jre8")
+    .from("eclipse-temurin:11-jre-alpine")
+    .run("apk", "add", "--no-cache", "bash")
     .user("root")
     .workDir("/opt/docker")
     .copy(appDir, targetDir)

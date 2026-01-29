@@ -21,7 +21,7 @@ import java.io.{File, IOException, PrintWriter}
 import scala.io.Source
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.execution.datasources.csv.{DataframeToDriverCsvFileWriter, RawCsvRDDToDataframe}
+//import org.apache.spark.sql.execution.datasources.csv.{DataframeToDriverCsvFileWriter, RawCsvRDDToDataframe}
 import org.apache.spark.sql.{Dataset, Encoders, Row, SaveMode, DataFrame => SparkDataFrame}
 import ai.deepsense.commons.resources.ManagedResource
 import ai.deepsense.deeplang.ExecutionContext
@@ -54,7 +54,7 @@ object DriverFiles extends JsonReader {
     }
   }
 
-  private def readCsv
+/*  private def readCsv
       (driverPath: String, csvChoice: InputFileFormatChoice.Csv)
       (implicit context: ExecutionContext): SparkDataFrame = {
     val params = CsvOptions.map(csvChoice.getNamesIncluded, csvChoice.getCsvColumnSeparator())
@@ -63,6 +63,23 @@ object DriverFiles extends JsonReader {
 
     RawCsvRDDToDataframe.parse(fileLinesRdd, context.sparkSQLSession.sparkSession, params)
   }
+*/
+private def readCsv
+    (driverPath: String, csvChoice: InputFileFormatChoice.Csv)
+    (implicit context: ExecutionContext): SparkDataFrame = {
+
+  val spark = context.sparkSQLSession.sparkSession
+  val params = CsvOptions.map(csvChoice.getNamesIncluded, csvChoice.getCsvColumnSeparator())
+
+  // Read file using Spark built-in CSV reader
+  spark.read
+    .option("header", csvChoice.getNamesIncluded.toString)
+//    .option("delimiter", csvChoice.getCsvColumnSeparator())
+     .option("delimiter", csvChoice.getCsvColumnSeparator().toString)
+    .csv(driverPath)
+}
+
+
 
   private def readJson(driverPath: String)(implicit context: ExecutionContext) = {
     val lines = Source.fromFile(driverPath).getLines().toStream
@@ -71,7 +88,7 @@ object DriverFiles extends JsonReader {
     readJsonFromRdd(fileLinesRdd, sparkSession)
   }
 
-  private def writeCsv
+/*  private def writeCsv
       (path: FilePath, csvChoice: OutputFileFormatChoice.Csv, dataFrame: DataFrame)
       (implicit context: ExecutionContext): Unit = {
     val params = CsvOptions.map(csvChoice.getNamesIncluded, csvChoice.getCsvColumnSeparator())
@@ -84,6 +101,63 @@ object DriverFiles extends JsonReader {
       context.sparkSQLSession.sparkSession
     )
   }
+*/
+
+/*private def writeCsv(
+    path: FilePath,
+    csvChoice: OutputFileFormatChoice.Csv,
+    dataFrame: DataFrame
+)(implicit context: ExecutionContext): Unit = {
+
+  val delimiter = csvChoice.getCsvColumnSeparator().getValue
+  val includeHeader = csvChoice.getNamesIncluded.toString
+
+  dataFrame.sparkDataFrame.write
+    .option("header", includeHeader)
+    .option("delimiter", delimiter)
+    .mode(SaveMode.Overwrite) // Or use the `saveMode` passed in
+    .csv(path.pathWithoutScheme)
+}*/
+
+/*private def writeCsv(
+    path: FilePath,
+    csvChoice: OutputFileFormatChoice.Csv,
+    dataFrame: DataFrame
+)(implicit context: ExecutionContext): Unit = {
+  val delimiter = csvChoice.getCsvColumnSeparator() match {
+    case ColumnSeparatorChoice.Comma => ","
+    case ColumnSeparatorChoice.Semicolon => ";"
+    case ColumnSeparatorChoice.Tab => "\t"
+    case other => throw new IllegalArgumentException(s"Unsupported separator: $other")
+  }
+
+  val includeHeader = csvChoice.getNamesIncluded.toString
+
+  dataFrame.sparkDataFrame.write
+    .option("header", includeHeader)
+    .option("delimiter", delimiter)
+    .mode(SaveMode.Overwrite) // Or use the `saveMode` passed in
+    .csv(path.pathWithoutScheme)
+}*/
+
+
+
+private def writeCsv(
+    path: FilePath,
+    csvChoice: OutputFileFormatChoice.Csv,
+    dataFrame: DataFrame
+)(implicit context: ExecutionContext): Unit = {
+  val delimiter = csvChoice.getCsvColumnSeparator().toString
+  val includeHeader = csvChoice.getNamesIncluded.toString
+
+  dataFrame.sparkDataFrame.write
+    .option("header", includeHeader)
+    .option("delimiter", delimiter)
+    .mode(SaveMode.Overwrite) // Or use the `saveMode` passed in
+    .csv(path.pathWithoutScheme)
+}
+
+
 
   private def writeJson(path: FilePath, dataFrame: DataFrame)
                        (implicit context: ExecutionContext): Unit = {
