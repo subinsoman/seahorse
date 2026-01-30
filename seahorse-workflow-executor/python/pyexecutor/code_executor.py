@@ -53,10 +53,16 @@ class CodeExecutor(object):
     def _supervised_execution(self, workflow_id, node_id, custom_operation_code):
         # noinspection PyBroadException
         try:
+            print("+++++++++++++++++++++++++++++", file=sys.stderr)
+            print("python tranformation job exicution starts", file=sys.stderr)
+            print("+++++++++++++++++++++++++++++", file=sys.stderr)
             print(f"DEBUG: Beginning supervised execution for node {node_id}", file=sys.stderr)
             self._run_custom_code(workflow_id, node_id, custom_operation_code)
             self.entry_point.executionCompleted(workflow_id, node_id)
             print(f"DEBUG: Execution completed successfully for node {node_id}", file=sys.stderr)
+            print("+++++++++++++++++++++++++++++", file=sys.stderr)
+            print("python tranformation job exicution ends", file=sys.stderr)
+            print("+++++++++++++++++++++++++++++", file=sys.stderr)
         except Exception as e:
             log_error('AN ERROR OCCURED ==>')
             stacktrace = traceback.format_exc()
@@ -82,97 +88,8 @@ class CodeExecutor(object):
             print("DEBUG: Data is already a DataFrame", file=sys.stderr)
             return data
         elif self.is_pandas_available and isinstance(data, pandas.DataFrame):
-            print("DEBUG: Converting pandas DataFrame to Spark DataFrame", file=sys.stderr)
-            # Use Java-based conversion to avoid Python RDD operations
-            try:
-                print("DEBUG: Using Java-based pandas conversion", file=sys.stderr)
-                # Convert pandas to JSON and then to Spark DataFrame
-                json_str = data.to_json(orient='records')
-                
-                # Create RDD from JSON string using Java directly
-                java_rdd = spark_session._jvm.spark.sparkContext.parallelize(
-                    spark_session._jvm.java.util.Arrays.asList(json_str)
-                )
-                
-                # Read JSON RDD as DataFrame
-                df = spark_session.read.json(java_rdd)
-                return df
-            except Exception as e:
-                print(f"DEBUG: Error in Java-based conversion: {e}", file=sys.stderr)
-                try:
-                    # Alternative: Write to temp file and read back
-                    import tempfile
-                    import os
-                    print("DEBUG: Using temp file conversion", file=sys.stderr)
-                    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-                        data.to_json(f, orient='records', lines=True)
-                        temp_path = f.name
-                    
-                    # Read from temp file
-                    df = spark_session.read.json(temp_path)
-                    
-                    # Clean up
-                    os.unlink(temp_path)
-                    return df
-                except Exception as e2:
-                    print(f"DEBUG: Error in temp file conversion: {e2}", file=sys.stderr)
-                    # Last resort: Build DataFrame with proper types
-                    try:
-                        from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType, FloatType, DoubleType, BooleanType, TimestampType
-                        from pyspark.sql import Row
-                        import numpy as np
-                        
-                        print("DEBUG: Using typed conversion with Row objects", file=sys.stderr)
-                        
-                        # Map pandas dtypes to Spark types
-                        def pandas_to_spark_type(pandas_dtype):
-                            dtype_str = str(pandas_dtype)
-                            if dtype_str.startswith('int64'):
-                                return LongType()
-                            elif dtype_str.startswith('int'):
-                                return IntegerType()
-                            elif dtype_str.startswith('float64'):
-                                return DoubleType()
-                            elif dtype_str.startswith('float'):
-                                return FloatType()
-                            elif dtype_str.startswith('bool'):
-                                return BooleanType()
-                            elif dtype_str.startswith('datetime'):
-                                return TimestampType()
-                            else:
-                                return StringType()
-                        
-                        # Create schema based on pandas dtypes
-                        fields = []
-                        for col in data.columns:
-                            spark_type = pandas_to_spark_type(data[col].dtype)
-                            fields.append(StructField(col, spark_type, True))
-                        schema = StructType(fields)
-                        
-                        # Convert data to list of Rows, handling NaN values
-                        rows = []
-                        for idx, row in data.iterrows():
-                            row_dict = {}
-                            for col in data.columns:
-                                val = row[col]
-                                # Handle NaN values
-                                if pandas.isna(val):
-                                    row_dict[col] = None
-                                elif isinstance(val, (np.integer, np.floating)):
-                                    # Convert numpy types to Python types
-                                    row_dict[col] = val.item()
-                                else:
-                                    row_dict[col] = val
-                            rows.append(Row(**row_dict))
-                        
-                        # Create DataFrame with schema
-                        return spark_session.createDataFrame(rows, schema)
-                    except Exception as e3:
-                        print(f"DEBUG: Error in typed conversion: {e3}", file=sys.stderr)
-                        # Final fallback: simple conversion
-                        rows = data.values.tolist()
-                        columns = data.columns.tolist()
-                        return spark_session.createDataFrame(rows, columns)
+            print("DEBUG: Converting pandas DataFrame to Spark DataFrame using native createDataFrame", file=sys.stderr)
+            return spark_session.createDataFrame(data)
         elif isinstance(data, (list, tuple)) and all(isinstance(el, (list, tuple)) for el in data):
             print("DEBUG: Converting list of lists/tuples to DataFrame", file=sys.stderr)
             return spark_session.createDataFrame(data)
@@ -202,6 +119,10 @@ class CodeExecutor(object):
         # In Spark 3.x, newSession() returns a new SparkSession
         print("DEBUG: Creating new Spark session", file=sys.stderr)
         new_spark_session = self.spark_session.newSession()
+        
+        # Enable Arrow optimization for toPandas()
+        print("DEBUG: Enabling Arrow optimization", file=sys.stderr)
+        new_spark_session.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
         
         # Ensure the new session has all required attributes
         if not hasattr(new_spark_session, '_wrapped'):
