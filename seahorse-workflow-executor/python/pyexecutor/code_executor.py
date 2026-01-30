@@ -40,7 +40,7 @@ class CodeExecutor(object):
         self.threads = []
 
     def run(self, workflow_id, node_id, custom_operation_code):
-        print(f"DEBUG: Starting execution thread for workflow {workflow_id}, node {node_id}", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Starting execution thread", file=sys.stderr)
         executor_thread = Thread(
             target=lambda: self._supervised_execution(workflow_id, node_id, custom_operation_code),
             name='Supervisor {}'.format(node_id))
@@ -56,20 +56,20 @@ class CodeExecutor(object):
             print("+++++++++++++++++++++++++++++", file=sys.stderr)
             print("python tranformation job exicution starts", file=sys.stderr)
             print("+++++++++++++++++++++++++++++", file=sys.stderr)
-            print(f"DEBUG: Beginning supervised execution for node {node_id}", file=sys.stderr)
+            print(f"DEBUG: {workflow_id}_{node_id}-Beginning supervised execution", file=sys.stderr)
             self._run_custom_code(workflow_id, node_id, custom_operation_code)
             self.entry_point.executionCompleted(workflow_id, node_id)
-            print(f"DEBUG: Execution completed successfully for node {node_id}", file=sys.stderr)
+            print(f"DEBUG: {workflow_id}_{node_id}-Execution completed successfully", file=sys.stderr)
             print("+++++++++++++++++++++++++++++", file=sys.stderr)
             print("python tranformation job exicution ends", file=sys.stderr)
             print("+++++++++++++++++++++++++++++", file=sys.stderr)
         except Exception as e:
-            log_error('AN ERROR OCCURED ==>')
+            log_error(f"{workflow_id}_{node_id}-AN ERROR OCCURRED ==>")
             stacktrace = traceback.format_exc()
-            log_error(stacktrace)
-            print(f"DEBUG: Execution failed for node {node_id}: {str(e)}", file=sys.stderr)
+            log_error(f"{workflow_id}_{node_id}-{stacktrace}")
+            print(f"DEBUG: {workflow_id}_{node_id}-Execution failed: {str(e)}", file=sys.stderr)
             self.entry_point.executionFailed(workflow_id, node_id, stacktrace)
-            log_error('ERROR END')
+            log_error(f"{workflow_id}_{node_id}-ERROR END")
 
     def _convert_data_to_data_frame(self, data):
         spark_session = self.spark_session
@@ -111,13 +111,13 @@ class CodeExecutor(object):
         :return: None
         """
 
-        print(f"DEBUG: Running custom code for workflow {workflow_id}, node {node_id}", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Running custom code", file=sys.stderr)
         
         # This should've been checked before running
         assert self.isValid(custom_operation_code)
 
         # In Spark 3.x, newSession() returns a new SparkSession
-        print("DEBUG: Creating new Spark session", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Creating new Spark session", file=sys.stderr)
         new_spark_session = self.spark_session.newSession()
         
         # Enable Arrow optimization for toPandas()
@@ -126,11 +126,20 @@ class CodeExecutor(object):
         
         # Ensure the new session has all required attributes
         if not hasattr(new_spark_session, '_wrapped'):
-            print("DEBUG: Setting _wrapped attribute on new session", file=sys.stderr)
-            new_spark_session._wrapped = new_spark_session._jsparkSession
+            print(f"DEBUG: {workflow_id}_{node_id}-Setting _wrapped attribute on new session", file=sys.stderr)
+            class WrappedHelper:
+                def __init__(self, java_spark_session, spark_context):
+                    print("DEBUGGING: Wrapped helper for _wrapped in new session initialized", file=sys.stderr)
+                    self._jsparkSession = java_spark_session
+                    self._sc = spark_context
+                        
+                @property
+                def _conf(self):
+                    return self._jsparkSession.sessionState().conf()
+            new_spark_session._wrapped = WrappedHelper(new_spark_session._jsparkSession, self.spark_context)
             
         if not hasattr(new_spark_session, '_ssql_ctx'):
-            print("DEBUG: Setting _ssql_ctx attribute on new session", file=sys.stderr)
+            print(f"DEBUG: {workflow_id}_{node_id}-Setting _ssql_ctx attribute on new session", file=sys.stderr)
             # Create a minimal SQLContext wrapper for the new session
             java_sql_context = new_spark_session._jsparkSession.sqlContext()
             class SQLContextWrapper:
@@ -141,21 +150,21 @@ class CodeExecutor(object):
             new_spark_session._ssql_ctx = SQLContextWrapper(java_sql_context)
 
         spark_version = self.spark_context.version
-        print(f"DEBUG: Spark version: {spark_version}", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Spark version: {spark_version}", file=sys.stderr)
         
         # For Spark 3.x, we don't need SQLContext anymore
         if not spark_version.startswith("3."):
             log_debug("Spark version {} is not supported".format(spark_version))
             raise ValueError("Spark version {} is not supported. This code is for Spark 3.x".format(spark_version))
 
-        print("DEBUG: Retrieving input DataFrame from Java", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Retrieving input DataFrame from Java", file=sys.stderr)
         raw_input_data_frame = DataFrame(
             jdf=self.entry_point.retrieveInputDataFrame(workflow_id,
                                                         node_id,
                                                         CodeExecutor.INPUT_PORT_NUMBER),
             sql_ctx=new_spark_session._wrapped)  # In Spark 3.x, use _wrapped instead of sql_ctx
         
-        print("DEBUG: Creating DataFrame in new session", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Creating DataFrame in new session", file=sys.stderr)
         # For Spark 3.x, we can use the Java DataFrame directly in the new session
         # Instead of going through RDD, which causes serialization issues
         try:
@@ -166,7 +175,7 @@ class CodeExecutor(object):
             # Clean up the temp view
             new_spark_session.catalog.dropTempView(temp_view_name)
         except Exception as e:
-            print(f"DEBUG: Error with temp view approach: {e}", file=sys.stderr)
+            print(f"DEBUG: {workflow_id}_{node_id}-Error with temp view approach: {e}", file=sys.stderr)
             # Fallback: try to create directly from Java DataFrame
             input_data_frame = DataFrame(raw_input_data_frame._jdf, new_spark_session._wrapped)
 
@@ -177,37 +186,37 @@ class CodeExecutor(object):
             'sqlContext': new_spark_session  # For backward compatibility, map sqlContext to spark session
         }
 
-        print('DEBUG: Executing code with context keys: {}\n'.format(list(context.keys())), file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Executing code with context keys: {list(context.keys())}\n", file=sys.stderr)
         try:
             exec(custom_operation_code, context)
-            print("DEBUG: Code execution completed", file=sys.stderr)
+            print(f"DEBUG: {workflow_id}_{node_id}-Code execution completed", file=sys.stderr)
         except ImportError as e:
-            log_debug('ImportError!!! ==> {}\n'.format(str(e)))
-            print(f"DEBUG: ImportError during code execution: {str(e)}", file=sys.stderr)
-            raise Exception('ImportError!!! ==> {}\n'.format(str(e)))
+            log_debug(f"{workflow_id}_{node_id}-ImportError!!! ==> {str(e)}\n")
+            print(f"DEBUG: {workflow_id}_{node_id}-ImportError during code execution: {str(e)}", file=sys.stderr)
+            raise Exception(f"ImportError!!! ==> {str(e)}\n")
         
-        print("DEBUG: Calling transform function", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Calling transform function", file=sys.stderr)
         output_data = context[self.TRANSFORM_FUNCTION_NAME](input_data_frame)
         
         try:
-            print("DEBUG: Converting output data to DataFrame", file=sys.stderr)
+            print(f"DEBUG: {workflow_id}_{node_id}-Converting output data to DataFrame", file=sys.stderr)
             output_data_frame = self._convert_data_to_data_frame(output_data)
         except:
             error_msg = 'Operation returned {} instead of a DataFrame'.format(output_data) + \
                 ' (or pandas.DataFrame, single value, tuple/list of single values,' + \
                 ' tuple/list of tuples/lists of single values) (pandas library available: ' + \
                 str(self.is_pandas_available) + ').'
-            log_debug(error_msg)
-            print(f"DEBUG: {error_msg}", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-{error_msg}")
+            print(f"DEBUG: {workflow_id}_{node_id}-{error_msg}", file=sys.stderr)
             raise Exception(error_msg)
 
-        print("DEBUG: Registering output DataFrame", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Registering output DataFrame", file=sys.stderr)
         # noinspection PyProtectedMember
         self.entry_point.registerOutputDataFrame(workflow_id,
                                                  node_id,
                                                  CodeExecutor.OUTPUT_PORT_NUMBER,
                                                  output_data_frame._jdf)
-        print("DEBUG: Output DataFrame registered successfully", file=sys.stderr)
+        print(f"DEBUG: {workflow_id}_{node_id}-Output DataFrame registered successfully", file=sys.stderr)
 
     # noinspection PyPep8Naming
     def isValid(self, custom_operation_code):
