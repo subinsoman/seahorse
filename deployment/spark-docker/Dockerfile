@@ -60,12 +60,23 @@ RUN /opt/conda/bin/conda config --add channels conda-forge
 # Copy requirements.txt
 COPY requirements.txt /tmp/requirements.txt
 
+# Copy spark-defaults.conf
+ENV ARROW_PRE_0_15_IPC_FORMAT=1
+
+COPY spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf
+
+# Remove bundled Arrow JARs to force use of newer version from packages
+# Arrow JAR deletion reverted - using bundled Arrow 0.15.1 compatible with Spark 3.0.0
+
+
 # Install Python packages
 RUN /opt/conda/bin/pip install -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt
 
 #COPY paths.py /opt/conda/lib/python3.7/site-packages/jupyter_core/
 ENV PATH=$PATH:/opt/conda/bin
+
+ENV JDK_JAVA_OPTIONS="--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"
 
 COPY startup.sh /opt/
 RUN chown root.root /opt/startup.sh && chmod 700 /opt/startup.sh

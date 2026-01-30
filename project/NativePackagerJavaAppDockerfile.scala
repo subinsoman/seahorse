@@ -22,6 +22,8 @@ object NativePackagerJavaAppDockerfile {
   def apply(appDir: File, executableScriptName: String): Dockerfile = new Dockerfile()
     .from("eclipse-temurin:11-jre-alpine")
     .run("apk", "add", "--no-cache", "bash")
+    .env("JDK_JAVA_OPTIONS", "--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true")
+    .env("JAVA_OPTS", "--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true")
     .user("root")
     .workDir("/opt/docker")
     .copy(appDir, targetDir)

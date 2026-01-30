@@ -27,3 +27,4 @@ keras
 kmodes==0.12.2
 flask
 matplotlib
+pyarrow==0.15.1

@@ -50,6 +50,11 @@ dockerfile in docker := {
     env("TINI_VERSION", tiniVersion)
     addRaw(s"https://github.com/krallin/tini/releases/download/$tiniVersion/tini", "/bin/tini")
     runRaw("chmod +x /bin/tini")
+    
+    env("JDK_JAVA_OPTIONS", "--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true")
+    env("JAVA_OPTS", "--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true")
+    env("ARROW_PRE_0_15_IPC_FORMAT", "1")
+
 
     copy(pythonAndRDeps.value, "we-deps.zip")
     copy(weJar.value, "we.jar")
