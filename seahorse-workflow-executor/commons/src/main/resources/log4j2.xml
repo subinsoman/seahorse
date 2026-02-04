@@ -6,24 +6,24 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="akka" level="WARN"/>
-        <Logger name="com.datastax" level="WARN"/>
-        <Logger name="io.netty" level="WARN"/>
-        <Logger name="org.apache.cassandra" level="WARN"/>
-        <Logger name="org.apache.hadoop" level="WARN"/>
-        <Logger name="org.apache.spark" level="WARN"/>
-        <Logger name="org.cassandraunit" level="WARN"/>
-        <Logger name="org.spark-project" level="WARN"/>
-        <Logger name="org.apache.spark.api.r" level="INFO"/>
-        <Logger name="org.reflections" level="WARN"/>
-        <Logger name="parquet.hadoop" level="WARN"/>
-        <Logger name="slick" level="INFO"/>
-        <Logger name="ai.deepsense" level="DEBUG"/>
-        <Logger name="org.spark_project.jetty" level="WARN"/>
-        <Logger name="DataNucleus" level="WARN"/>
-        <Logger name="com.jolbox" level="WARN"/>
+        <Logger name="akka" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="com.datastax" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="io.netty" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="org.apache.cassandra" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="org.apache.hadoop" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="org.apache.spark" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="org.cassandraunit" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="org.spark-project" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="org.apache.spark.api.r" level="${env:LOG_LEVEL:-INFO}"/>
+        <Logger name="org.reflections" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="parquet.hadoop" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="slick" level="${env:LOG_LEVEL:-INFO}"/>
+        <Logger name="ai.deepsense" level="${env:LOG_LEVEL:-DEBUG}"/>
+        <Logger name="org.spark_project.jetty" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="DataNucleus" level="${env:LOG_LEVEL:-WARN}"/>
+        <Logger name="com.jolbox" level="${env:LOG_LEVEL:-WARN}"/>
         
-        <Root level="warn">
+        <Root level="${env:LOG_LEVEL:-WARN}">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>

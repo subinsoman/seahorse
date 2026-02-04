@@ -1,0 +1,81 @@
+# Scala/SBT build artifacts
+target/
+**/target/
+project/target/
+project/project/target/
+*.class
+
+# Backup files
+*_bkp
+*_bkp*
+*.bak
+*.orig
+*~
+*_initial
+*_inital
+*_worked
+*_worked*
+*_claude
+*_claude*
+*_partialerror
+*_bak
+*.swp
+*.p
+*_withauth
+
+# Date-based backups
+*.scala_*
+*.sbt_*
+*.py_*
+dependencies.scala_*
+plugins.sbt_*
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE configuration
+.idea/
+.vscode/
+*.iml
+.bsp/
+
+# Dependencies and archives
+we-deps.zip
+**/we-deps.zip
+*.zip
+*.jar
+node_modules/
+**/node_modules/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+.tmp/
+.DS_Store
+*.txt
+*.scala1
+
+# Specific leftovers seen in status
+sessionmanager/extra-lib/
+sessionmanager/we-deps-consts/
+backendcommons/project/
+datasourcemanager/project/
+sessionmanager/project/
+seahorse-workflow-executor/deeplang/src/main/scala/ai/deepsense/deeplang/doperables/CustomCodeTransformer.scala1
+
+**/project/
+!/project/
+# But keep the root project folder
+!project/build.properties
+!project/plugins.sbt
+!project/Commons.scala
+# Add exceptions if needed, but for now assuming subproject 'project' folders are junk or can be ignored if they are just target-like
+seahorse-workflow-executor/sparkutils*/
+architecture_remote_kernel.md
+docker-compose.yml

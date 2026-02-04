@@ -24,7 +24,7 @@ class PublisherActor(topic: String, publisher: MQPublisher) extends Actor with L
 
   override def receive: Receive = {
     case message: Any =>
-      logger.info(
+      logger.debug(
         "PublisherActor for topic: {} receives message {} from '{}'",
         topic,
         message.getClass.getName,

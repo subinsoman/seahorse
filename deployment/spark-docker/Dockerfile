@@ -61,7 +61,7 @@ RUN /opt/conda/bin/conda config --add channels conda-forge
 COPY requirements.txt /tmp/requirements.txt
 
 # Copy spark-defaults.conf
-ENV ARROW_PRE_0_15_IPC_FORMAT=1
+
 
 COPY spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf
 

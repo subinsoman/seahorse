@@ -67,21 +67,34 @@ class CustomCodeEntryPoint(
   def registerCallbackServerPort(newPort: Int): Unit =
     replacePromise(pythonPort, newPort)
 
-  def retrieveInputDataFrame(workflowId: String, nodeId: String, portNumber: Int): DataFrame =
+  def retrieveInputDataFrame(workflowId: String, nodeId: String, portNumber: Int): DataFrame = {
+    logger.debug(s"${workflowId}_${nodeId}-Retrieving input DataFrame for port $portNumber")
     dataFrameStorage.getInputDataFrame(workflowId, nodeId, portNumber).get
+  }
 
   def retrieveOutputDataFrame(workflowId: String, nodeId: String, portNumber: Int): DataFrame =
     dataFrameStorage.getOutputDataFrame(workflowId, nodeId, portNumber).get
 
   def registerOutputDataFrame(
-      workflowId: String, nodeId: String, portNumber: Int, dataFrame: DataFrame): Unit =
+      workflowId: String, nodeId: String, portNumber: Int, dataFrame: DataFrame): Unit = {
+    logger.debug(s"${workflowId}_${nodeId}-Registering output DataFrame for port $portNumber")
     dataFrameStorage.setOutputDataFrame(workflowId, nodeId, portNumber, dataFrame)
+  }
 
-  def executionCompleted(workflowId: String, nodeId: String): Unit =
+  def executionCompleted(workflowId: String, nodeId: String): Unit = {
+    logger.debug(s"${workflowId}_${nodeId}-Execution completed")
     operationExecutionDispatcher.executionEnded(workflowId, nodeId, Right(()))
+  }
 
-  def executionFailed(workflowId: String, nodeId: String, error: String): Unit =
+  def executionFailed(workflowId: String, nodeId: String, error: String): Unit = {
+    logger.error(s"${workflowId}_${nodeId}-Execution failed: $error")
     operationExecutionDispatcher.executionEnded(workflowId, nodeId, Left(error))
+  }
+
+  def failAllPendingExecutions(reason: String): Unit = {
+    logger.error(s"Failing all pending custom code executions. Reason: $reason")
+    operationExecutionDispatcher.failAllPending(reason)
+  }
 }
 
 object CustomCodeEntryPoint {

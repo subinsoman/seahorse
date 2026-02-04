@@ -76,7 +76,7 @@ class MockedContextualCodeExecutor
 
 private class MockedCustomCodeExecutionProvider
   extends CustomCodeExecutionProvider(
-    new MockedCodeExecutor, new MockedCodeExecutor, new MockedCustomOperationExecutor)
+    new MockedCodeExecutor, new MockedCodeExecutor, new MockedCustomOperationExecutor, scala.concurrent.duration.Duration.Inf)
 
 private class MockedCustomOperationExecutor
   extends OperationExecutionDispatcher {

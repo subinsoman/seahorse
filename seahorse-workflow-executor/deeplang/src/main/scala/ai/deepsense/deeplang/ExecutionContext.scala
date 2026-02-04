@@ -145,7 +145,7 @@ case class ContextualCustomCodeExecutor(
     val result =
       customCodeExecutionProvider.operationExecutionDispatcher.executionStarted(workflowId, nodeId)
     executor.run(workflowId.toString, nodeId.toString, code)
-    logger.debug("Waiting for user's custom operation to finish")
-    Await.result(result, Duration.Inf)
+    logger.debug(s"${workflowId}_${nodeId}-Waiting for user's custom operation to finish")
+    Await.result(result, customCodeExecutionProvider.customOperationTimeout)
   }
 }

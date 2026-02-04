@@ -128,7 +128,16 @@ workflowjson,
 workflowjson % "test -> test",
 sdk,
 workflowexecutormqprotocol,
-workflowexecutormqprotocol % "test -> test") settings settingsForNotPublished
+workflowexecutormqprotocol % "test -> test") settings settingsForNotPublished settings (
+    fork := true,
+    javaOptions ++= Seq(
+      "--add-opens=java.base/java.nio=ALL-UNNAMED",
+      "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.base/java.util=ALL-UNNAMED",
+      "-Dio.netty.tryReflectionSetAccessible=true"
+    )
+  )
 
 // Sequentially perform integration tests
 addCommandAlias(

@@ -16,7 +16,10 @@
 
 package ai.deepsense.deeplang
 
+import scala.concurrent.duration.Duration
+
 case class CustomCodeExecutionProvider(
     pythonCodeExecutor: CustomCodeExecutor,
     rCodeExecutor: CustomCodeExecutor,
-    operationExecutionDispatcher: OperationExecutionDispatcher)
+    operationExecutionDispatcher: OperationExecutionDispatcher,
+    customOperationTimeout: Duration)

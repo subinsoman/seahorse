@@ -158,6 +158,9 @@ private def runPyExecutor(gatewayPort: Int, pythonExecutorPath: String): Process
             val exitCode = process.exitValue()
             pyExecutorProcess.set(None)
             logger.info(s"PyExecutor exited with code $exitCode")
+            customCodeEntryPoint.failAllPendingExecutions(
+              s"Python executor process exited with code $exitCode"
+            )
 
             Thread.sleep(250)
             go()

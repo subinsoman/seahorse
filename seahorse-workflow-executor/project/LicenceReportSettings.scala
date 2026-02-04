@@ -34,7 +34,7 @@ object LicenceReportSettings {
         "org.json4s",
         "org.apache.httpcomponents",
         "com.google.guava",
-        "log4j",
+
         "org.99soft.guice",
         "org.eclipse.jetty.orbit", // + EPL. Can be treated as APACHE?
         "commons-beanutils",

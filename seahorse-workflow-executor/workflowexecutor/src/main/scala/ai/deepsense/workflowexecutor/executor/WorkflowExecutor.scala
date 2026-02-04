@@ -107,7 +107,8 @@ case class WorkflowExecutor(
     val customCodeExecutionProvider = CustomCodeExecutionProvider(
       pythonExecutionCaretaker.pythonCodeExecutor,
       rExecutionCaretaker.rCodeExecutor,
-      operationExecutionDispatcher)
+      operationExecutionDispatcher,
+      ConfigFactory.load.getInt("custom-code.execution-timeout").minutes)
 
     val libraryPath = "/library"
 

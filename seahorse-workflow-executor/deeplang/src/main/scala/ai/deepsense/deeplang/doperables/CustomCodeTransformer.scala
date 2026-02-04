@@ -45,9 +45,12 @@ abstract class CustomCodeTransformer extends Transformer {
       throw CustomOperationExecutionException("Code validation failed")
     }
 
+    // Enable Arrow optimization for faster data transfer between Spark and Python
+    ctx.sparkSQLSession.sparkSession.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+    logger.info(s"PyArrow enabled: ${ctx.sparkSQLSession.sparkSession.conf.get("spark.sql.execution.arrow.pyspark.enabled")}")
+
     ctx.dataFrameStorage.withInputDataFrame(InputPortNumber, df.sparkDataFrame) {
-      logger.info("--->   :: In info log")
-      logger.debug("--->   :: In debug log")
+
       runCode(ctx, code) match {
         case Left(error) =>
           throw CustomOperationExecutionException(s"Execution exception:\n\n$error")
@@ -59,13 +62,6 @@ abstract class CustomCodeTransformer extends Transformer {
           
           outputDataFrameOption match {
             case Some(sparkDataFrame) =>
-              logger.info(s"Output DataFrame type: ${sparkDataFrame.getClass.getName}")
-              logger.info(s"Output DataFrame schema: ${sparkDataFrame.schema}")
-              val rowCount = sparkDataFrame.count()
-              logger.info(s"Output DataFrame row count: $rowCount")
-              if (rowCount == 0) {
-                logger.warn("Output DataFrame is empty (0 rows)")
-              }
               DataFrame.fromSparkDataFrame(sparkDataFrame)
             case None =>
               logger.error("No output DataFrame found in dataFrameStorage for OutputPortNumber: " + OutputPortNumber)
