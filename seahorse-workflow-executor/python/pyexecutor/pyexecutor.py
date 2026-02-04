@@ -140,7 +140,7 @@ class PyExecutor(object):
                     if not pyspark_python:
                         # Use a common Python path that should exist on executors
                         # Common paths: /usr/bin/python3, /usr/bin/python, python3, python
-                        for python_path in ['/usr/bin/python3', '/usr/bin/python3.7', '/usr/bin/python', 'python3', 'python']:
+                        for python_path in ['/opt/conda/bin/python', '/opt/conda/bin/python3.7', '/usr/bin/python3.7', '/usr/bin/python3', '/usr/bin/python', 'python3', 'python']:
                             try:
                                 # Check if this Python exists by trying to get its version
                                 import subprocess
@@ -318,6 +318,17 @@ class PyExecutor(object):
                     spark_session._jsparkSession = java_spark_session
                     spark_session._jwrapped = java_spark_session
                     
+                    class WrappedHelper:
+                        def __init__(self, java_spark_session, spark_context):
+                            self._jsparkSession = java_spark_session
+                            self._sc = spark_context
+                        
+                        @property
+                        def _conf(self):
+                            return self._jsparkSession.sessionState().conf()
+
+                    spark_session._wrapped = WrappedHelper(java_spark_session, spark_context)
+
                     SparkSession._instantiatedSession = spark_session
                     print("DEBUG: SparkSession wrapper created successfully", file=sys.stderr)
                 

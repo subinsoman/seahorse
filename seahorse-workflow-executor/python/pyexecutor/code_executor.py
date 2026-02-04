@@ -41,7 +41,7 @@ class CodeExecutor(object):
         self.threads = []
 
     def run(self, workflow_id, node_id, custom_operation_code):
-        print(f"DEBUG: {workflow_id}_{node_id}-Starting execution thread", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Starting execution thread")
         executor_thread = Thread(
             target=lambda: self._supervised_execution(workflow_id, node_id, custom_operation_code),
             name='Supervisor {}'.format(node_id))
@@ -54,25 +54,17 @@ class CodeExecutor(object):
     def _supervised_execution(self, workflow_id, node_id, custom_operation_code):
         # noinspection PyBroadException
         try:
-            print("+++++++++++++++++++++++++++++", file=sys.stderr)
-            print("python tranformation job exicution starts", file=sys.stderr)
-            print("+++++++++++++++++++++++++++++", file=sys.stderr)
-            print(f"DEBUG: {workflow_id}_{node_id}-Beginning supervised execution", file=sys.stderr)
+
+            log_debug(f"{workflow_id}_{node_id}-python tranformation job exicution starts-Beginning supervised execution")
             self._run_custom_code(workflow_id, node_id, custom_operation_code)
             self.entry_point.executionCompleted(workflow_id, node_id)
-            print(f"DEBUG: {workflow_id}_{node_id}-Execution completed successfully", file=sys.stderr)
-            print("+++++++++++++++++++++++++++++", file=sys.stderr)
-            print("python tranformation job exicution ends", file=sys.stderr)
-            print("+++++++++++++++++++++++++++++", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-python tranformation job exicution completed successfully")
         except Exception as e:
-            log_error(f"{workflow_id}_{node_id}-AN ERROR OCCURRED ==>")
             stacktrace = traceback.format_exc()
-            log_error(f"{workflow_id}_{node_id}-{stacktrace}")
-            print(f"DEBUG: {workflow_id}_{node_id}-Execution failed: {str(e)}", file=sys.stderr)
+            log_error(f"{workflow_id}_{node_id}-Execution failed: {str(e)}\\n{stacktrace}")
             self.entry_point.executionFailed(workflow_id, node_id, stacktrace)
-            log_error(f"{workflow_id}_{node_id}-ERROR END")
 
-    def _convert_data_to_data_frame(self, data_wrapper):
+    def _convert_data_to_data_frame(self, data_wrapper, workflow_id, node_id):
         """
         Accepts a list wrapper [data] to allow clearing the caller's reference.
         """
@@ -81,160 +73,132 @@ class CodeExecutor(object):
         # Extract data from wrapper
         data = data_wrapper[0]
         
-        print(f"DEBUG: Converting data of type {type(data)} to DataFrame", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Converting data of type {type(data)} to DataFrame")
         
         try:
             import pandas
             self.is_pandas_available = True
-            print("DEBUG: Pandas is available", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Pandas is available")
         except ImportError:
             self.is_pandas_available = False
-            print("DEBUG: Pandas is not available", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Pandas is not available")
             
         if isinstance(data, DataFrame):
-            print("DEBUG: Data is already a DataFrame", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Data is already a DataFrame")
             return data
         elif self.is_pandas_available and isinstance(data, pandas.DataFrame):
-            return self._distributed_pandas_to_spark(data, data_wrapper)
+            return self._pandas_to_spark_arrow(data, data_wrapper, workflow_id, node_id)
 
         elif isinstance(data, (list, tuple)) and all(isinstance(el, (list, tuple)) for el in data):
-            print("DEBUG: Converting list of lists/tuples to DataFrame", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Converting list of lists/tuples to DataFrame")
             return spark_session.createDataFrame(data)
         elif isinstance(data, (list, tuple)):
-            print("DEBUG: Converting list/tuple to DataFrame", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Converting list/tuple to DataFrame")
             # Convert to single-element tuples
             rows = [(x,) for x in data]
             return spark_session.createDataFrame(rows)
         else:
-            print("DEBUG: Converting single value to DataFrame", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Converting single value to DataFrame")
             return spark_session.createDataFrame([(data,)])
 
-    def _distributed_pandas_to_spark(self, data, data_wrapper):
+    def _pandas_to_spark_arrow(self, data, data_wrapper, workflow_id, node_id):
         """
-        Converts a Pandas DataFrame to a Spark DataFrame using a distributed strategy.
-        Splits the Pandas DF into chunks, parallelizes them, and converts to rows on executors.
-        This avoids converting the entire DF to a list of rows on the driver.
+        Converts a Pandas DataFrame to a Spark DataFrame using Arrow optimization.
+        This is the most efficient approach for Pandas-to-Spark conversion.
         """
-        print("DEBUG: Converting pandas DataFrame to Spark DataFrame using Distributed Strategy", file=sys.stderr)
-        sc = self.spark_context
+        import time
+        
+        start_time = time.time()
         spark_session = self.spark_session
         
         # Capture schema if attached
         schema = getattr(data, "_spark_schema", None)
+        
+        # Calculate input metrics
+        total_rows = len(data)
+        total_cols = len(data.columns)
+        memory_mb = data.memory_usage(deep=True).sum() / 1024 / 1024
+        
+        log_debug(f"{workflow_id}_{node_id}-========== Pandas to Spark Conversion ==========")
+        log_debug(f"{workflow_id}_{node_id}-Input: {total_rows:,} rows × {total_cols} cols (~{memory_mb:.1f} MB)")
         if schema:
-             print("DEBUG: Found attached _spark_schema", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Using attached _spark_schema")
 
         try:
-            # OPTION 1: Distributed Conversion (Cluster Bound)
-            print("DEBUG: Using Distributed Conversion Strategy to force Cluster execution", file=sys.stderr)
-            import numpy as np
+            # Step 1: Configure Arrow
+            log_debug(f"{workflow_id}_{node_id}-[Step 1/5] Configuring Arrow optimization...")
+            spark_session.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+            spark_session.conf.set("spark.sql.execution.arrow.pyspark.fallback.enabled", "true")  # Enable fallback
+            spark_session.conf.set("spark.sql.execution.arrow.maxRecordsPerBatch", "10000")
             
-            # 1. Determine partitions
-            try:
-                # Aggressive partitioning to keep chunk sizes small
-                num_partitions = int(sc.defaultParallelism) * 10
-            except:
-                num_partitions = 16 
-                
-            if num_partitions < 8: 
-                num_partitions = 8
+            # Step 2: Create DataFrame
+            log_debug(f"{workflow_id}_{node_id}-[Step 2/5] Creating Spark DataFrame with Arrow...")
+            create_start = time.time()
+            result = spark_session.createDataFrame(data, schema=schema)
+            create_time = time.time() - create_start
+            log_debug(f"{workflow_id}_{node_id}-[Step 2/5] DataFrame created in {create_time:.2f}s")
             
-            print(f"DEBUG: Splitting Pandas DataFrame into {num_partitions} chunks", file=sys.stderr)
+            # Step 3: Repartition for better parallelism
+            num_partitions = max(1, total_rows // 1000000)  # ~1M rows per partition
+            if num_partitions > 1:
+                log_debug(f"{workflow_id}_{node_id}-[Step 3/5] Repartitioning to {num_partitions} partitions...")
+                repartition_start = time.time()
+                result = result.repartition(num_partitions)
+                repartition_time = time.time() - repartition_start
+                log_debug(f"{workflow_id}_{node_id}-[Step 3/5] Repartitioned in {repartition_time:.2f}s")
+            else:
+                log_debug(f"{workflow_id}_{node_id}-[Step 3/5] Skipping repartition (single partition)")
             
-            # 2. Split Pandas DF into Views using iloc (Manual Slicing)
-            # np.array_split typically creates copies or complex objects. Manual slicing creates views.
-            # We must be careful to use integer indexing.
-            rows = len(data)
-            chunk_size = int(np.ceil(rows / num_partitions))
-            pdf_chunks = [data.iloc[i : i + chunk_size] for i in range(0, rows, chunk_size)]
+            # Step 4: Cache the DataFrame
+            log_debug(f"{workflow_id}_{node_id}-[Step 4/5] Caching DataFrame...")
+            result = result.cache()
             
-            # Cache info for fallback
-            data_columns = list(data.columns)
-            data_dtypes = data.dtypes
+            # Step 5: Materialize and count
+            log_debug(f"{workflow_id}_{node_id}-[Step 5/5] Materializing and counting rows...")
+            count_start = time.time()
+            row_count = result.count()  # Triggers Spark job, visible in UI
+            count_time = time.time() - count_start
+            log_debug(f"{workflow_id}_{node_id}-[Step 5/5] Counted {row_count:,} rows in {count_time:.2f}s")
             
-            # Generate schema on driver if not provided
-            driver_generated_schema = None
-            if not schema:
-                print("DEBUG: Generating Spark Schema from Pandas dtypes on Driver", file=sys.stderr)
-                try:
-                    fields = []
-                    for col_name, dtype in data_dtypes.items():
-                        if str(dtype) == 'int64':
-                            spark_type = LongType()
-                        elif str(dtype) == 'float64':
-                            spark_type = DoubleType()
-                        elif str(dtype) == 'bool':
-                            spark_type = BooleanType()
-                        elif str(dtype).startswith('datetime'):
-                            spark_type = TimestampType()
-                        else:
-                            spark_type = StringType()
-                        fields.append(StructField(str(col_name), spark_type, True))
-                    
-                    driver_generated_schema = StructType(fields)
-                    print(f"DEBUG: Generated Schema: {driver_generated_schema}", file=sys.stderr)
-                except Exception as e:
-                    print(f"DEBUG: Failed to generate schema on driver: {e}", file=sys.stderr)
-
-            # 3. Parallelize chunks
-            chunk_rdd = sc.parallelize(pdf_chunks, num_partitions)
+            # Calculate final metrics
+            total_time = time.time() - start_time
+            throughput = row_count / total_time if total_time > 0 else 0
             
-            # CLEANUP DRIVER MEMORY
-            print("DEBUG: Cleaning up driver memory (Pandas DF + Chunks)", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-========== Conversion Complete ==========")
+            log_debug(f"{workflow_id}_{node_id}-✓ Total time: {total_time:.2f}s")
+            log_debug(f"{workflow_id}_{node_id}-✓ Throughput: {throughput:,.0f} rows/sec")
+            log_debug(f"{workflow_id}_{node_id}-✓ Create time: {create_time:.2f}s, Count time: {count_time:.2f}s")
+            log_debug(f"{workflow_id}_{node_id}-=============================================")
+            
+            # Cleanup driver memory after conversion
+            log_debug(f"{workflow_id}_{node_id}-Cleaning up driver memory...")
             import gc
-            del data
-            del pdf_chunks
-            data_wrapper[0] = None # Clear caller ref
+            data_wrapper[0] = None  # Clear the wrapper reference
             gc.collect()
             
-            # 4. Define conversion logic
-            def process_chunk_to_rows(chunk_iterator):
-                import gc
-                # Note: chunk_iterator yields logic chunks (numpy arrays of DF), 
-                # but parallelize(list_of_dfs) means each item is a DF.
-                # mapPartitions yields an iterator of items in the partition.
-                # If we parallelized N chunks into N partitions, 
-                # each partition has exactly 1 chunk (DataFrame).
-                
-                for chunk in chunk_iterator:
-                    if not chunk.empty:
-                        # itertuples is efficient
-                        yield from chunk.itertuples(index=False, name=None)
-                
-                gc.collect()
-                        
-            # 5. Execute on cluster
-            print("DEBUG: Processing chunks on executors...", file=sys.stderr)
-            data_rdd = chunk_rdd.mapPartitions(process_chunk_to_rows)
+            return result
             
-            # 6. Create DataFrame
-            print("DEBUG: Creating DataFrame from Distributed RDD", file=sys.stderr)
-            
-            # Enable Arrow just in case
-            spark_session.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
-
-            if schema:
-                 return spark_session.createDataFrame(data_rdd, schema=schema)
-            elif driver_generated_schema:
-                 return spark_session.createDataFrame(data_rdd, schema=driver_generated_schema)
-            else:
-                 return spark_session.createDataFrame(data_rdd, schema=data_columns)
-
         except Exception as e:
-            print(f"DEBUG: Distributed conversion failed: {e}. Fallback...", file=sys.stderr)
-            # If we already deleted data (data_wrapper[0] is None), we can't fallback easily
-            # But 'data' in this scope might be gone if we del'd it.
-            # However, if exception happened BEFORE del, we are good.
-            # If AFTER del, we are in trouble.
-            # We check locals.
+            elapsed = time.time() - start_time
+            log_error(f"{workflow_id}_{node_id}-Arrow conversion failed after {elapsed:.2f}s: {e} - Falling back to non-Arrow conversion")
             
-            # Since we can't reliably recover if data is deleted, we re-raise if it's gone.
-            if data_wrapper[0] is None:
-                 print("DEBUG: Data already cleared from driver, cannot fallback.", file=sys.stderr)
-                 raise e
-            
-            # Fallback
-            return spark_session.createDataFrame(data, schema=schema)
+            # Fallback: Disable Arrow and try again
+            try:
+                spark_session.conf.set("spark.sql.execution.arrow.pyspark.enabled", "false")
+                fallback_start = time.time()
+                result = spark_session.createDataFrame(data, schema=schema)
+                fallback_time = time.time() - fallback_start
+                log_debug(f"{workflow_id}_{node_id}-Fallback conversion succeeded in {fallback_time:.2f}s")
+                
+                # Cleanup
+                import gc
+                data_wrapper[0] = None
+                gc.collect()
+                
+                return result
+            except Exception as fallback_error:
+                log_error(f"{workflow_id}_{node_id}-Fallback conversion also failed: {fallback_error}")
+                raise
 
     def _run_custom_code(self, workflow_id, node_id, custom_operation_code):
         """
@@ -245,25 +209,25 @@ class CodeExecutor(object):
         :return: None
         """
 
-        print(f"DEBUG: {workflow_id}_{node_id}-Running custom code", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Running custom code")
         
         # This should've been checked before running
         assert self.isValid(custom_operation_code)
 
         # In Spark 3.x, newSession() returns a new SparkSession
-        print(f"DEBUG: {workflow_id}_{node_id}-Creating new Spark session", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Creating new Spark session")
         new_spark_session = self.spark_session.newSession()
         
         # Enable Arrow optimization for toPandas()
-        print("DEBUG: Enabling Arrow optimization", file=sys.stderr)
+        log_debug("Enabling Arrow optimization")
         new_spark_session.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
         
         # Ensure the new session has all required attributes
         if not hasattr(new_spark_session, '_wrapped'):
-            print(f"DEBUG: {workflow_id}_{node_id}-Setting _wrapped attribute on new session", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Setting _wrapped attribute on new session")
             class WrappedHelper:
                 def __init__(self, java_spark_session, spark_context):
-                    print("DEBUGGING: Wrapped helper for _wrapped in new session initialized", file=sys.stderr)
+                    log_debug("Wrapped helper for _wrapped in new session initialized")
                     self._jsparkSession = java_spark_session
                     self._sc = spark_context
                         
@@ -273,7 +237,7 @@ class CodeExecutor(object):
             new_spark_session._wrapped = WrappedHelper(new_spark_session._jsparkSession, self.spark_context)
             
         if not hasattr(new_spark_session, '_ssql_ctx'):
-            print(f"DEBUG: {workflow_id}_{node_id}-Setting _ssql_ctx attribute on new session", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Setting _ssql_ctx attribute on new session")
             # Create a minimal SQLContext wrapper for the new session
             java_sql_context = new_spark_session._jsparkSession.sqlContext()
             class SQLContextWrapper:
@@ -284,21 +248,21 @@ class CodeExecutor(object):
             new_spark_session._ssql_ctx = SQLContextWrapper(java_sql_context)
 
         spark_version = self.spark_context.version
-        print(f"DEBUG: {workflow_id}_{node_id}-Spark version: {spark_version}", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Spark version: {spark_version}")
         
         # For Spark 3.x, we don't need SQLContext anymore
         if not spark_version.startswith("3."):
             log_debug("Spark version {} is not supported".format(spark_version))
             raise ValueError("Spark version {} is not supported. This code is for Spark 3.x".format(spark_version))
 
-        print(f"DEBUG: {workflow_id}_{node_id}-Retrieving input DataFrame from Java", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Retrieving input DataFrame from Java")
         raw_input_data_frame = DataFrame(
             jdf=self.entry_point.retrieveInputDataFrame(workflow_id,
                                                         node_id,
                                                         CodeExecutor.INPUT_PORT_NUMBER),
             sql_ctx=new_spark_session._wrapped)  # In Spark 3.x, use _wrapped instead of sql_ctx
         
-        print(f"DEBUG: {workflow_id}_{node_id}-Creating DataFrame in new session", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Creating DataFrame in new session")
         # For Spark 3.x, we can use the Java DataFrame directly in the new session
         # Instead of going through RDD, which causes serialization issues
         try:
@@ -309,7 +273,7 @@ class CodeExecutor(object):
             # Clean up the temp view
             new_spark_session.catalog.dropTempView(temp_view_name)
         except Exception as e:
-            print(f"DEBUG: {workflow_id}_{node_id}-Error with temp view approach: {e}", file=sys.stderr)
+            log_error(f"{workflow_id}_{node_id}-Error with temp view approach: {e}")
             # Fallback: try to create directly from Java DataFrame
             input_data_frame = DataFrame(raw_input_data_frame._jdf, new_spark_session._wrapped)
 
@@ -320,33 +284,31 @@ class CodeExecutor(object):
             'sqlContext': new_spark_session  # For backward compatibility, map sqlContext to spark session
         }
 
-        print(f"DEBUG: {workflow_id}_{node_id}-Executing code with context keys: {list(context.keys())}\n", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Executing code with context keys: {list(context.keys())}")
         try:
             exec(custom_operation_code, context)
-            print(f"DEBUG: {workflow_id}_{node_id}-Code execution completed", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Code execution completed")
         except ImportError as e:
-            log_debug(f"{workflow_id}_{node_id}-ImportError!!! ==> {str(e)}\n")
-            print(f"DEBUG: {workflow_id}_{node_id}-ImportError during code execution: {str(e)}", file=sys.stderr)
+            log_error(f"{workflow_id}_{node_id}-ImportError during code execution: {str(e)}")
             raise Exception(f"ImportError!!! ==> {str(e)}\n")
         
-        print(f"DEBUG: {workflow_id}_{node_id}-Calling transform function", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Calling transform function")
         output_data = context[self.TRANSFORM_FUNCTION_NAME](input_data_frame)
         
         try:
-            print(f"DEBUG: {workflow_id}_{node_id}-Converting output data to DataFrame", file=sys.stderr)
+            log_debug(f"{workflow_id}_{node_id}-Converting output data to DataFrame")
             # Wrap output_data in a list to allow _convert_data_to_data_frame to clear the reference
             output_wrapper = [output_data]
             del output_data # Remove local reference immediately, now only wrapper holds it
-            output_data_frame = self._convert_data_to_data_frame(output_wrapper)
+            output_data_frame = self._convert_data_to_data_frame(output_wrapper, workflow_id, node_id)
         except:
             # We can't access output_data here easily as we deleted it, but usually exception info is enough
             error_msg = 'Operation returned invalid data or DataFrame conversion failed (pandas library available: ' + \
                 str(self.is_pandas_available) + ').'
-            log_debug(f"{workflow_id}_{node_id}-{error_msg}")
-            print(f"DEBUG: {workflow_id}_{node_id}-{error_msg}", file=sys.stderr)
+            log_error(f"{workflow_id}_{node_id}-{error_msg}")
             raise Exception(error_msg)
         finally:
-             print(f"DEBUG: {workflow_id}_{node_id}-Cleaning up wrapper and context in finally block", file=sys.stderr)
+             log_debug(f"{workflow_id}_{node_id}-Cleaning up wrapper and context in finally block")
              import gc
              if 'output_wrapper' in locals():
                  output_wrapper[0] = None
@@ -357,13 +319,13 @@ class CodeExecutor(object):
                  del input_data_frame
              gc.collect()
 
-        print(f"DEBUG: {workflow_id}_{node_id}-Registering output DataFrame", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Registering output DataFrame")
         # noinspection PyProtectedMember
         self.entry_point.registerOutputDataFrame(workflow_id,
                                                  node_id,
                                                  CodeExecutor.OUTPUT_PORT_NUMBER,
                                                  output_data_frame._jdf)
-        print(f"DEBUG: {workflow_id}_{node_id}-Output DataFrame registered successfully", file=sys.stderr)
+        log_debug(f"{workflow_id}_{node_id}-Output DataFrame registered successfully")
 
     # noinspection PyPep8Naming
     def isValid(self, custom_operation_code):
@@ -375,12 +337,12 @@ class CodeExecutor(object):
         try:
             parsed = ast.parse(custom_operation_code)
         except SyntaxError:
-            print("DEBUG: SyntaxError in custom operation code", file=sys.stderr)
+            log_debug("SyntaxError in custom operation code")
             return False
 
         is_valid = any(filter(is_transform_function, parsed.body))
         log_debug('Valid code? {}: {}'.format(is_valid, custom_operation_code))
-        print(f"DEBUG: Code validation result: {is_valid}", file=sys.stderr)
+        log_debug(f"Code validation result: {is_valid}")
         return is_valid
 
     # noinspection PyClassHasNoInit
