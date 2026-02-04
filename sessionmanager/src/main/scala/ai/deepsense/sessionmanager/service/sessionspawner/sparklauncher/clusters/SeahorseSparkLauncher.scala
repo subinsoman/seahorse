@@ -32,6 +32,7 @@ import ai.deepsense.sessionmanager.service.sessionspawner.sparklauncher.{SparkLa
 object SeahorseSparkLauncher {
 
   def apply(
+      workflowId: String,
       applicationArgs: Seq[String],
       sparkLauncherConfig: SparkLauncherConfig,
       clusterConfig: ClusterDetails): Validation[SparkLauncherError, SparkLauncher] = handleUnexpectedExceptions {
@@ -42,13 +43,13 @@ object SeahorseSparkLauncher {
         "spark.driver.extraJavaOptions", "-Dfile.encoding=UTF8 -XX:+UseG1GC", delimiter = " ")
       val sparkLauncher = clusterConfig.clusterType match {
         case ClusterType.local =>
-          LocalSparkLauncher(applicationArgs, sparkLauncherConfig, clusterConfig, args)
+          LocalSparkLauncher(workflowId, applicationArgs, sparkLauncherConfig, clusterConfig, args)
         case ClusterType.standalone =>
-          StandaloneSparkLauncher(applicationArgs, sparkLauncherConfig, clusterConfig, args)
+          StandaloneSparkLauncher(workflowId, applicationArgs, sparkLauncherConfig, clusterConfig, args)
         case ClusterType.yarn =>
-          YarnSparkLauncher(applicationArgs, sparkLauncherConfig, clusterConfig, args)
+          YarnSparkLauncher(workflowId, applicationArgs, sparkLauncherConfig, clusterConfig, args)
         case ClusterType.mesos =>
-          MesosSparkLauncher(applicationArgs, sparkLauncherConfig, clusterConfig, args)
+          MesosSparkLauncher(workflowId, applicationArgs, sparkLauncherConfig, clusterConfig, args)
       }
 
       val jars = new java.io.File(sparkLauncherConfig.sparkResourcesJarsDir)

@@ -28,7 +28,8 @@ private [clusters] object LocalSparkLauncher {
 
   import scala.collection.JavaConversions._
 
-  def apply(applicationArgs: Seq[String],
+  def apply(workflowId: String,
+            applicationArgs: Seq[String],
             config: SparkLauncherConfig,
             clusterConfig: ClusterDetails,
             args: SparkOptionsMultiMap): SparkLauncher = {
@@ -39,7 +40,7 @@ private [clusters] object LocalSparkLauncher {
       .setMaster("local[*]")
       .setDeployMode("client")
       .setAppResource(config.weJarPath)
-      .setAppName("Seahorse Workflow Executor")
+      .setAppName(s"Sixdee Analytical Engine - Workflow: $workflowId")
       .addAppArgs(applicationArgs: _*)
       .addFile(config.weDepsPath)
       .setConf("spark.executorEnv.PYTHONPATH", config.weDepsPath)

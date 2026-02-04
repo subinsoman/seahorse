@@ -44,12 +44,18 @@ class SparkLauncherSessionSpawner @Inject()(
     logger.info(s"Creating session for workflow ${sessionConfig.workflowId}")
 
     val interceptorHandle = outputInterceptorFactory.prepareInterceptorWritingToFiles(
+      sessionConfig.workflowId.toString,
       clusterDetails
     )
 
     val applicationArgs = SessionExecutorArgs(sessionConfig, sparkLauncherConfig)
     val startedSession = for {
-      launcher <- SeahorseSparkLauncher(applicationArgs, sparkLauncherConfig, clusterDetails)
+      launcher <- SeahorseSparkLauncher(
+        sessionConfig.workflowId.toString,
+        applicationArgs,
+        sparkLauncherConfig,
+        clusterDetails
+      )
       listener = new LoggingSparkAppListener()
       handle <- handleUnexpectedExceptions {
         interceptorHandle.attachTo(launcher)

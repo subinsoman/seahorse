@@ -75,11 +75,22 @@ trait Executor extends Logging {
       customCodeExecutionProvider)
   }
 
-  def createSparkContext(): SparkContext = {
+  def createSparkContext(workflowId: Option[String] = None): SparkContext = {
+    val appName = workflowId match {
+      case Some(id) => s"Sixdee Analytical Engine - Workflow: $id"
+      case None => "Sixdee Analytical Engine Workflow Executor"
+    }
     val sparkConf = new SparkConf()
-    sparkConf.setAppName("Seahorse Workflow Executor")
+    sparkConf.setAppName(appName)
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .registerKryoClasses(Array())
+    logger.info("Configuring SparkContext with Java 11 options...")
+    sparkConf.set("spark.executor.extraJavaOptions",
+        "--add-opens=java.base/java.nio=ALL-UNNAMED " +
+          "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED " +
+          "--add-opens=java.base/java.lang=ALL-UNNAMED " +
+          "--add-opens=java.base/java.util=ALL-UNNAMED " +
+          "-Dio.netty.tryReflectionSetAccessible=true")
 
     val sparkContext = new SparkContext(sparkConf)
     sparkContext

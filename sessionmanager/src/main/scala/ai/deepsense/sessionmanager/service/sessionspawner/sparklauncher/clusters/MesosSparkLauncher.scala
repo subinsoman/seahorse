@@ -30,7 +30,8 @@ private [clusters] object MesosSparkLauncher {
   val sparkVersion = BuildInfo.sparkVersion
   val hadoopVersion = BuildInfo.hadoopVersion
 
-  def apply(applicationArgs: Seq[String],
+  def apply(workflowId: String,
+            applicationArgs: Seq[String],
             config: SparkLauncherConfig,
             clusterConfig: ClusterDetails,
             args: SparkOptionsMultiMap): SparkLauncher = {
@@ -42,7 +43,7 @@ private [clusters] object MesosSparkLauncher {
       .setDeployMode("client")
       .setAppResource(config.weJarPath)
       .setSparkHome(config.sparkHome)
-      .setAppName("Seahorse Workflow Executor")
+      .setAppName(s"Sixdee Analytical Engine - Workflow: $workflowId")
       .addAppArgs(applicationArgs: _*)
       .addFile(config.weDepsPath)
       .setConf("spark.executor.uri",

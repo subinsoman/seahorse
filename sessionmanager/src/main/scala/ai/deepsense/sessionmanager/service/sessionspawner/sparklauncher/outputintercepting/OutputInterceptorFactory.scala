@@ -63,7 +63,7 @@ class OutputInterceptorFactory @Inject()(
   @Named("session-executor.spark-applications-logs-dir") val executorsLogDirectory: String
 ) {
 
-  def prepareInterceptorWritingToFiles(clusterDetails: ClusterDetails): OutputInterceptorHandle = {
+  def prepareInterceptorWritingToFiles(workflowId: String, clusterDetails: ClusterDetails): OutputInterceptorHandle = {
     new File(executorsLogDirectory).mkdirs()
 
     val childProcLoggerName = s"WE-app-${UUID.randomUUID()}"
@@ -75,7 +75,7 @@ class OutputInterceptorFactory @Inject()(
       val format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")
       val formattedTime = format.format(time)
       val illegalFileNameCharactersRegExp = "[^a-zA-Z0-9.-]"
-      s"$formattedTime-${clusterDetails.name.replaceAll(illegalFileNameCharactersRegExp, "_")}.log"
+      s"$formattedTime-$workflowId-${clusterDetails.name.replaceAll(illegalFileNameCharactersRegExp, "_")}.log"
     }
     val fileHandler = new FileHandler(s"$executorsLogDirectory/$fileName")
     fileHandler.setFormatter(new SimpleFormaterWithoutOutputRedirectorNoise)

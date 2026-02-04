@@ -18,14 +18,15 @@ import sys
 
 
 def log_debug(s):
-    with open('/opt/docker/pyexecutor.log', 'a+') as f:
-        print('[PyExecutor] {}\n'.format(s), file=f)
+    print('[PyExecutor DEBUG] {}'.format(s), file=sys.stdout)
+    sys.stdout.flush()
 
 
 def log_error(s):
-    with open('/opt/docker/pyexecutor.log', 'a+') as f:
-        print('[PyExecutor] {}\n'.format(s), file=f)
+    print('[PyExecutor ERROR] {}'.format(s), file=sys.stderr)
+    sys.stderr.flush()
+
 
 def log_info(s):
-    with open('/opt/docker/pyexecutor.log', 'a+') as f:
-        print('[PyExecutor] {}\n'.format(s), file=f)
+    print('[PyExecutor INFO] {}'.format(s), file=sys.stdout)
+    sys.stdout.flush()

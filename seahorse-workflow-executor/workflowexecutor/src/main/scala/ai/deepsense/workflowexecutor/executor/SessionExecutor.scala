@@ -92,7 +92,7 @@ case class SessionExecutor(
    */
   def execute(): Unit = {
     logger.info(s"SessionExecutor for '$workflowId' starts...")
-    val sparkContext = createSparkContext()
+    val sparkContext = createSparkContext(Some(workflowId))
     val sparkSQLSession = createSparkSQLSession(sparkContext)
     val dataFrameStorage = new DataFrameStorageImpl
 
@@ -134,7 +134,8 @@ case class SessionExecutor(
     val customCodeExecutionProvider = CustomCodeExecutionProvider(
       pythonExecutionCaretaker.pythonCodeExecutor,
       rExecutionCaretaker.rCodeExecutor,
-      operationExecutionDispatcher)
+      operationExecutionDispatcher,
+      config.getInt("custom-code.execution-timeout").minutes)
 
     implicit val system = ActorSystem()
     setupLivyKeepAliveLogging(system, keepAliveInterval)
